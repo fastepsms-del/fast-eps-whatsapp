@@ -1,0 +1,223 @@
+// ============================================================================
+// Fast EPS · Atendimento WhatsApp com IA — Schema do banco de dados
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+/// Status do funil de atendimento/venda do lead (ver seção 26 do briefing).
+enum LeadStatus {
+  NOVO
+  EM_ATENDIMENTO
+  INTERESSADO
+  AGUARDANDO_INFORMACOES
+  ORCAMENTO_SOLICITADO
+  ORCAMENTO_ENVIADO
+  NEGOCIACAO
+  AGUARDANDO_RESPOSTA
+  CONVERTIDO
+  PERDIDO
+  ATENDIMENTO_HUMANO
+}
+
+/// Temperatura comercial do lead.
+enum LeadTemperature {
+  DESCONHECIDA
+  FRIO
+  MORNO
+  QUENTE
+}
+
+/// Produto de interesse principal identificado na conversa.
+enum ProductInterest {
+  INDEFINIDO
+  MOLDURA_EPS
+  PAINEL_MONOLITICO
+  OUTRO
+}
+
+/// Origem do lead (para leads vindos de tráfego pago/Google, conforme informado).
+enum LeadSource {
+  DESCONHECIDA
+  TRAFEGO_PAGO
+  GOOGLE
+  INSTAGRAM
+  FACEBOOK
+  INDICACAO
+  ORGANICO
+  OUTRO
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  STICKER
+  LOCATION
+  CONTACTS
+  INTERACTIVE
+  TEMPLATE
+  SYSTEM
+  UNSUPPORTED
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+/// Classificação interna da intenção da mensagem (não é exposta ao cliente).
+enum MessageIntent {
+  SAUDACAO
+  MOLDURAS
+  PAINEL_MONOLITICO
+  ORCAMENTO
+  PRECO
+  MEDIDAS
+  INSTALACAO
+  ENTREGA
+  LOCALIZACAO
+  DUVIDA_TECNICA
+  ENVIO_FOTO
+  ENVIO_PROJETO
+  COMPRA
+  RECLAMACAO
+  ATENDIMENTO_HUMANO
+  INFORMACAO_INSTITUCIONAL
+  OUTRO
+}
+
+enum HandoffCategory {
+  PEDIDO_EXPLICITO
+  NEGOCIACAO_PRECO
+  RECLAMACAO
+  DUVIDA_TECNICA_COMPLEXA
+  ANALISE_DE_PROJETO
+  CONDICAO_COMERCIAL_ESPECIAL
+  FORA_DA_BASE_DE_CONHECIMENTO
+  DUVIDA_INSTALACAO
+  ORCAMENTO_PERSONALIZADO
+  INTENCAO_DE_COMPRA
+  OUTRO
+}
+
+// ----------------------------------------------------------------------------
+// Modelos
+// ----------------------------------------------------------------------------
+
+/// Um lead/cliente identificado pelo número de WhatsApp (wa_id).
+model Lead {
+  id          String   @id @default(cuid())
+  phone       String   @unique // número em formato E.164 sem "+", conforme WhatsApp Cloud API
+  name        String?
+  profileName String? // nome de exibição do WhatsApp (push name), pode divergir do nome real
+
+  city              String?
+  productInterest   ProductInterest @default(INDEFINIDO)
+  quantity          String? // texto livre: "30 metros", "12 janelas", etc.
+  measurements      String?
+  hasProject        Boolean?
+  hasPhoto          Boolean         @default(false)
+  desiredDate       String? // texto livre ("em 2 meses", "ainda não sei")
+  wantsQuote        Boolean         @default(false)
+  notes             String? @db.Text
+
+  status      LeadStatus      @default(NOVO)
+  temperature LeadTemperature @default(DESCONHECIDA)
+  source      LeadSource      @default(DESCONHECIDA)
+
+  humanHandoff         Boolean          @default(false)
+  humanHandoffReason   String?
+  humanHandoffCategory HandoffCategory?
+  humanHandoffAt       DateTime?
+
+  followUpCount  Int       @default(0)
+  lastFollowUpAt DateTime?
+  followUpPaused Boolean   @default(false)
+
+  lastInboundAt  DateTime?
+  lastOutboundAt DateTime?
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([humanHandoff])
+  @@index([lastInboundAt])
+  @@map("leads")
+}
+
+/// Cada mensagem trocada (recebida ou enviada) no atendimento.
+model Message {
+  id                String            @id @default(cuid())
+  leadId            String
+  lead              Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  direction         MessageDirection
+  type              MessageType       @default(TEXT)
+  status            MessageStatus     @default(SENT)
+
+  content           String?           @db.Text
+  mediaId           String? // ID da mídia na Graph API (para IMAGE/DOCUMENT/AUDIO/VIDEO)
+  mediaMimeType     String?
+
+  intent            MessageIntent?
+  isFollowUp        Boolean           @default(false)
+  isAutomated       Boolean           @default(true) // false quando enviada manualmente por um humano no painel
+
+  whatsappMessageId String?           @unique
+  errorMessage      String?
+
+  createdAt         DateTime          @default(now())
+
+  @@index([leadId, createdAt])
+  @@map("messages")
+}
+
+/// Seções da base de conhecimento configurável (ver seção 35 do briefing).
+/// Cada linha é uma seção (COMPANY_INFO, PRODUCTS, FAQ, PRICING, ...) cujo
+/// valor é um JSON livre, editável pelo painel administrativo sem precisar
+/// alterar código ou redeployar o sistema.
+model KnowledgeConfig {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("knowledge_config")
+}
+
+/// Log simples de eventos/erros de integração (WhatsApp, IA, webhook, banco).
+model IntegrationLog {
+  id        String   @id @default(cuid())
+  scope     String // "whatsapp" | "ai" | "webhook" | "cron" | "db"
+  level     String // "info" | "warn" | "error"
+  message   String   @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([scope, level, createdAt])
+  @@map("integration_logs")
+}
