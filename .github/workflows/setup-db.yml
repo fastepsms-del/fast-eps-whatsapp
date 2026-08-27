@@ -1,0 +1,27 @@
+name: Configurar banco de dados (Fast EPS)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Criar/atualizar tabelas no banco
+        run: npx prisma db push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Popular base de conhecimento inicial da Fast EPS
+        run: npm run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
