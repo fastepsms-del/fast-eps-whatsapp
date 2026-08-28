@@ -200,3 +200,4 @@ conhecidos do lead, indica corretamente dentro/fora do horário comercial).
   serviço de speech-to-text no `inboundMapper`.
 - O template de follow-up (`FOLLOW_UP_SETTINGS.messageTemplateName`) precisa existir e
   estar aprovado no WhatsApp Manager antes de ativar follow-up fora da janela de 24h.
+
