@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
+import { StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
+import type { MessageStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -13,27 +16,44 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     orderBy: { createdAt: "asc" },
   });
 
+  const displayName = lead.name ?? lead.profileName ?? lead.phone;
+  const initials = displayName
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <div className="mb-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-slate-800">{lead.name ?? lead.profileName ?? lead.phone}</h1>
-          {lead.humanHandoff && (
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-              Em atendimento humano
-            </span>
-          )}
+        <Link href="/admin/leads" className="mb-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600">
+          ← Voltar para leads
+        </Link>
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+            {initials || "?"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-semibold text-slate-800">{displayName}</h1>
+            <p className="text-xs text-slate-400">{lead.phone}</p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <StatusBadge status={lead.status} handoff={lead.humanHandoff} />
+            <TemperatureBadge temperature={lead.temperature} />
+          </div>
         </div>
 
         <div className="flex h-[60vh] flex-col gap-3 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
           {messages.map((m) => (
             <div key={m.id} className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${m.direction === "INBOUND" ? "self-start bg-slate-100 text-slate-800" : "self-end bg-brand-600 text-white"}`}>
-              <div>{m.content ?? `[${m.type}]`}</div>
-              <div className={`mt-1 text-[10px] ${m.direction === "INBOUND" ? "text-slate-400" : "text-brand-100"}`}>
-                {new Date(m.createdAt).toLocaleString("pt-BR")}
-                {m.isFollowUp ? " · follow-up" : ""}
-                {m.direction === "OUTBOUND" && !m.isAutomated ? " · manual" : ""}
-                {m.intent ? ` · ${m.intent}` : ""}
+              <div className="whitespace-pre-wrap">{m.content ?? `[${m.type}]`}</div>
+              <div className={`mt-1 flex items-center gap-1 text-[10px] ${m.direction === "INBOUND" ? "text-slate-400" : "text-brand-100"}`}>
+                <span>{new Date(m.createdAt).toLocaleString("pt-BR")}</span>
+                {m.isFollowUp && <span>· follow-up</span>}
+                {m.direction === "OUTBOUND" && !m.isAutomated && <span>· manual</span>}
+                {m.intent && <span>· {m.intent}</span>}
+                {m.direction === "OUTBOUND" && <MessageStatusIcon status={m.status} />}
               </div>
             </div>
           ))}
@@ -103,6 +123,30 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         )}
       </div>
     </div>
+  );
+}
+
+function MessageStatusIcon({ status }: { status: MessageStatus }) {
+  if (status === "FAILED") {
+    return (
+      <svg viewBox="0 0 16 16" className="h-3 w-3 text-red-300" fill="none">
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (status === "QUEUED" || status === "SENT") {
+    return (
+      <svg viewBox="0 0 16 16" className="h-3 w-3 text-brand-200" fill="none">
+        <path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 20 16" className={`h-3 w-4 ${status === "READ" ? "text-sky-200" : "text-brand-200"}`} fill="none">
+      <path d="M1 8.5 4.5 12 11 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 8.5 10.5 12 19 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

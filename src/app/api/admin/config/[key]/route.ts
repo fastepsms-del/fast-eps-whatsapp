@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateKnowledgeSection } from "@/lib/config/knowledgeService";
+import { buildSectionFromForm } from "@/lib/config/formCodec";
 import type { KnowledgeKey } from "@/lib/config/types";
 import { verifySessionToken, ADMIN_COOKIE_NAME } from "@/lib/adminAuth";
 import { logEvent } from "@/lib/logger";
@@ -27,15 +28,19 @@ export async function POST(request: NextRequest, { params }: { params: { key: st
   }
 
   const form = await request.formData();
-  const raw = String(form.get("value") ?? "");
 
   let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    const url = new URL("/admin/settings", request.url);
-    url.searchParams.set("error", `JSON inválido em ${key}`);
-    return NextResponse.redirect(url, { status: 303 });
+  if (key === "PRODUCTS") {
+    const raw = String(form.get("value") ?? "");
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      const url = new URL("/admin/settings", request.url);
+      url.searchParams.set("error", `JSON inválido em ${key}`);
+      return NextResponse.redirect(url, { status: 303 });
+    }
+  } else {
+    parsed = buildSectionFromForm(key, form);
   }
 
   const session = await verifySessionToken(request.cookies.get(ADMIN_COOKIE_NAME)?.value);
@@ -43,5 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: { key: st
   await updateKnowledgeSection(key, parsed as any, session?.username);
   await logEvent({ scope: "admin", level: "info", message: `Seção ${key} da base de conhecimento atualizada`, metadata: { by: session?.username } });
 
-  return NextResponse.redirect(new URL("/admin/settings", request.url), { status: 303 });
+  const url = new URL("/admin/settings", request.url);
+  url.searchParams.set("saved", key);
+  return NextResponse.redirect(url, { status: 303 });
 }
