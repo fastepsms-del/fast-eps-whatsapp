@@ -1,0 +1,83 @@
+name: Configurar WhatsApp (Meta Graph API)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar segredos obrigatorios
+        env:
+          WHATSAPP_APP_ID: ${{ secrets.WHATSAPP_APP_ID }}
+          WHATSAPP_APP_SECRET: ${{ secrets.WHATSAPP_APP_SECRET }}
+          WHATSAPP_WABA_ID: ${{ secrets.WHATSAPP_WABA_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          WHATSAPP_CALLBACK_URL: ${{ secrets.WHATSAPP_CALLBACK_URL }}
+        run: |
+          missing=0
+          for var in WHATSAPP_APP_ID WHATSAPP_APP_SECRET WHATSAPP_WABA_ID WHATSAPP_ACCESS_TOKEN WHATSAPP_VERIFY_TOKEN WHATSAPP_CALLBACK_URL; do
+            val="${!var}"
+            if [ -z "$val" ]; then
+              echo "::error::Segredo obrigatorio faltando: $var (Settings > Secrets and variables > Actions)"
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then exit 1; fi
+
+      - name: Registrar webhook do app na Graph API
+        env:
+          WHATSAPP_APP_ID: ${{ secrets.WHATSAPP_APP_ID }}
+          WHATSAPP_APP_SECRET: ${{ secrets.WHATSAPP_APP_SECRET }}
+          WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          WHATSAPP_CALLBACK_URL: ${{ secrets.WHATSAPP_CALLBACK_URL }}
+        run: |
+          set -e
+          RESPONSE=$(curl -sS -X POST "https://graph.facebook.com/v20.0/${WHATSAPP_APP_ID}/subscriptions" \
+            --data-urlencode "object=whatsapp_business_account" \
+            --data-urlencode "callback_url=${WHATSAPP_CALLBACK_URL}" \
+            --data-urlencode "verify_token=${WHATSAPP_VERIFY_TOKEN}" \
+            --data-urlencode "fields=messages" \
+            --data-urlencode "access_token=${WHATSAPP_APP_ID}|${WHATSAPP_APP_SECRET}")
+          echo "Resposta: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"success":true' || { echo "::error::Falha ao registrar webhook do app. Veja a resposta acima."; exit 1; }
+
+      - name: Assinar a WABA no app (subscribed_apps)
+        env:
+          WHATSAPP_WABA_ID: ${{ secrets.WHATSAPP_WABA_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+        run: |
+          set -e
+          RESPONSE=$(curl -sS -X POST "https://graph.facebook.com/v20.0/${WHATSAPP_WABA_ID}/subscribed_apps" \
+            --data-urlencode "access_token=${WHATSAPP_ACCESS_TOKEN}")
+          echo "Resposta: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"success":true' || { echo "::error::Falha ao assinar a WABA no app. Veja a resposta acima."; exit 1; }
+
+      - name: Criar template de follow-up (fora da janela de 24h)
+        env:
+          WHATSAPP_WABA_ID: ${{ secrets.WHATSAPP_WABA_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+        run: |
+          RESPONSE=$(curl -sS -X POST \
+            "https://graph.facebook.com/v20.0/${WHATSAPP_WABA_ID}/message_templates?access_token=${WHATSAPP_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "fast_eps_followup_24h",
+              "language": "pt_BR",
+              "category": "MARKETING",
+              "components": [
+                {
+                  "type": "BODY",
+                  "text": "Ola {{1}}! Aqui e da Fast EPS. Vimos que voce tinha interesse em nossas molduras de EPS ou paineis monoliticos. Ainda posso te ajudar a seguir com seu orcamento?"
+                }
+              ]
+            }')
+          echo "Resposta: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"id"'; then
+            echo "Template enviado para aprovacao da Meta com sucesso."
+          elif echo "$RESPONSE" | grep -qi 'already exists\|duplicate'; then
+            echo "Template ja existia — ok, seguindo em frente."
+          else
+            echo "::warning::Nao foi possivel confirmar a criacao do template."
+          fi
