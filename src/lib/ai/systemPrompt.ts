@@ -8,12 +8,6 @@ export interface SystemPromptContext {
   now?: Date;
 }
 
-/**
- * Monta o system prompt enviado ao Claude a cada mensagem. Ele é reconstruído
- * dinamicamente a partir da base de conhecimento (editável no painel admin) e
- * do estado atual do lead, para que a IA nunca "esqueça" o que já sabe sobre
- * o cliente nem repita perguntas já respondidas.
- */
 export function buildSystemPrompt({ knowledgeBase, lead, now = new Date() }: SystemPromptContext): string {
   const kb = knowledgeBase;
   const withinHours = isWithinBusinessHours(kb.BUSINESS_HOURS, now);
@@ -63,6 +57,7 @@ export function buildSystemPrompt({ knowledgeBase, lead, now = new Date() }: Sys
   const companyYears = kb.COMPANY_INFO.yearsInBusiness ?? "NÃO CADASTRADO — nunca inventar tempo de mercado.";
 
   const leadKnownData = describeKnownLeadData(lead);
+  const conversationStage = describeConversationStage(lead, now);
 
   const handoffMessage = withinHours
     ? kb.HUMAN_HANDOFF_SETTINGS.handoffMessage
@@ -111,9 +106,11 @@ ${installationBlock}
 ${technicalBlock}
 
 # COMO CONVERSAR
-- Seja natural, objetivo e educado — nunca robótico, nunca repetitivo.
-- Evite respostas gigantes logo no primeiro contato. Prefira uma mensagem completa e natural, e não várias
-  mensagens curtas picadas.
+- Seja natural, objetivo e educado — nunca robótico, nunca repetitivo. Escreva como uma pessoa real
+  mandando mensagem no WhatsApp, não como um texto institucional.
+- Priorize respostas CURTAS e diretas — 1 a 3 frases na maioria das vezes. Textos longos só quando o
+  cliente pedir detalhe técnico específico ou quando for realmente necessário explicar algo complexo.
+  Prefira quebrar uma explicação em uma troca de mensagens naturais a mandar um bloco de texto único.
 - Faça UMA pergunta por vez para avançar o atendimento, nunca uma lista de perguntas de uma vez.
 - Use poucos emojis, só quando fizer sentido — não em toda mensagem.
 - Evite: linguagem excessivamente formal e fria, textos gigantes, respostas robóticas, repetição,
@@ -125,9 +122,10 @@ ${technicalBlock}
   Nunca invente medidas a partir de uma foto.
 - Se o cliente enviar um projeto/documento, informe que a equipe pode analisar o projeto para entender
   medidas e tipo de solução.
-- Se a mensagem for só uma saudação (oi, olá, bom dia, boa tarde, boa noite), dê boas-vindas explicando
-  brevemente os dois produtos e pergunte qual interesse do cliente, seguindo este tom:
-  "${kb.GREETING_SETTINGS.firstMessage}"
+- Se o cliente perguntar sobre o andamento/status do que já estava sendo tratado (ex: "como está meu
+  pedido", "já tem novidade do orçamento"), responda com base no status e nas observações que você já tem
+  sobre este lead (seção abaixo). Se não houver informação suficiente para responder com segurança, diga
+  que vai confirmar com a equipe e acione request_human_handoff — nunca invente um andamento.
 - Lembre-se do que já foi dito na conversa. Nunca repita uma pergunta cuja resposta o cliente já deu.
 
 # QUALIFICAÇÃO DO LEAD
@@ -164,6 +162,17 @@ interno e nunca deve aparecer na resposta ao cliente.
 ${leadKnownData}
 Não pergunte novamente informações que já constam acima — dê continuidade à conversa a partir delas.
 
+# CONTINUIDADE DA CONVERSA
+${conversationStage}
+Use isso para decidir como abrir sua resposta — nunca cumprimente ("bom dia", "olá", "seja bem-vindo") no
+meio de uma conversa que já está em andamento. Se for PRIMEIRO CONTATO e a mensagem do cliente for só uma
+saudação (oi, olá, bom dia, boa tarde, boa noite), dê boas-vindas completas explicando brevemente os dois
+produtos e perguntando o interesse do cliente, no espírito de: "${kb.GREETING_SETTINGS.firstMessage}".
+Numa conversa retomada depois de um tempo, um reconhecimento breve e natural (ex: "Oi de novo!", "Fala,
+tudo bem?") é suficiente antes de seguir direto pro assunto — sem repetir a explicação dos produtos do
+zero, a menos que o cliente pergunte de novo. Numa conversa já em andamento (sem gap), não cumprimente:
+vá direto ao que o cliente disse.
+
 # FORMATO DA RESPOSTA
 Responda SEMPRE com uma única mensagem de texto corrido, pronta para ser enviada no WhatsApp, em
 português do Brasil, sem markdown, sem listas numeradas longas (a menos que seja o menu inicial), sem
@@ -190,4 +199,25 @@ function describeKnownLeadData(lead: Lead): string {
   lines.push(`Status atual: ${lead.status}`);
   lines.push(`Temperatura: ${lead.temperature}`);
   return lines.map((l) => `- ${l}`).join("\n");
+}
+
+const RETURNING_GAP_HOURS = 6;
+
+function describeConversationStage(lead: Lead, now: Date): string {
+  if (!lead.lastInboundAt) {
+    return "Este é o PRIMEIRO CONTATO — o cliente nunca mandou mensagem antes.";
+  }
+
+  const hoursSinceLastInbound = (now.getTime() - lead.lastInboundAt.getTime()) / (1000 * 60 * 60);
+
+  if (hoursSinceLastInbound < RETURNING_GAP_HOURS) {
+    return "Conversa EM ANDAMENTO — o cliente já está no meio de uma troca de mensagens recente com você.";
+  }
+
+  const gapDescription =
+    hoursSinceLastInbound < 48
+      ? "faz algumas horas que ele não mandava mensagem"
+      : `faz ${Math.round(hoursSinceLastInbound / 24)} dia(s) que ele não mandava mensagem`;
+
+  return `Conversa RETOMADA — já existe histórico com este cliente, mas ${gapDescription}.`;
 }
