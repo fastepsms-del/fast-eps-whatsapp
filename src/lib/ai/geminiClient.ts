@@ -25,4 +25,4 @@ export function getGeminiModel(): string {
     return process.env.GEMINI_MODEL || "gemini-3.5-flash";
 }
 
-export const MAX_RESPONSE_TOKENS = 700;
+export const MAX_RESPONSE_TOKENS = 400;
