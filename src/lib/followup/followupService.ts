@@ -8,19 +8,14 @@ import type { Lead, LeadStatus } from "@prisma/client";
 
 const FREE_TEXT_WINDOW_HOURS = 24;
 
+const FOLLOW_UP_CUTOVER_AT = new Date("2026-09-16T00:00:00Z");
+
 export interface FollowUpSweepResult {
   candidates: number;
   sent: number;
   skippedOutsideHours: boolean;
 }
 
-/**
- * Varre os leads elegíveis para follow-up automático (ver seção 27 do
- * briefing): sem resposta do cliente após nossa última mensagem, dentro do
- * limite de tentativas, respeitando o intervalo mínimo entre tentativas e
- * nunca em leads pausados/transferidos para humano. Pensado para ser
- * chamado por um cron (ex: `/api/cron/followups`).
- */
 export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUpSweepResult> {
   const kb = await getKnowledgeBase();
   const settings = kb.FOLLOW_UP_SETTINGS;
@@ -43,13 +38,12 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
       followUpPaused: false,
       followUpCount: { lt: settings.maxAttempts },
       lastOutboundAt: { not: null, lte: delayThreshold },
+      createdAt: { gte: FOLLOW_UP_CUTOVER_AT },
     },
   });
 
   const eligible = candidates.filter((lead) => {
     if (!lead.lastOutboundAt || !lead.lastInboundAt) return false;
-    // Só faz follow-up se a última mensagem da conversa foi nossa (cliente
-    // não respondeu ainda depois disso).
     if (lead.lastInboundAt >= lead.lastOutboundAt) return false;
     if (lead.lastFollowUpAt && lead.lastFollowUpAt > minIntervalThreshold) return false;
     return true;
