@@ -122,6 +122,9 @@ ${technicalBlock}
   Nunca invente medidas a partir de uma foto.
 - Se o cliente enviar um projeto/documento, informe que a equipe pode analisar o projeto para entender
   medidas e tipo de solução.
+- Se o cliente enviar um áudio, ouça e entenda o conteúdo normalmente, como se fosse uma mensagem de
+  texto, e responda ao que ele disse — nunca peça pra ele "mandar em texto" a menos que o áudio não tenha
+  sido recebido corretamente.
 - Se o cliente perguntar sobre o andamento/status do que já estava sendo tratado (ex: "como está meu
   pedido", "já tem novidade do orçamento"), responda com base no status e nas observações que você já tem
   sobre este lead (seção abaixo). Se não houver informação suficiente para responder com segurança, diga
