@@ -14,6 +14,11 @@ export interface MappedInboundMessage {
 
 const SUPPORTED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+/** Gemini não aceita parâmetros extras (ex: "; codecs=opus") no mime type. */
+function baseMimeType(mimeType: string): string {
+    return mimeType.split(";")[0]?.trim() ?? mimeType;
+}
+
 /**
  * Converte uma mensagem recebida do WhatsApp para (a) o que é persistido no
  * banco e (b) as partes de conteúdo enviadas à IA (incluindo baixar e
@@ -66,14 +71,26 @@ export async function mapInboundMessage(message: WhatsAppInboundMessage): Promis
               return { type: "DOCUMENT", content: caption, mediaId, mediaMimeType: mimeType, aiBlocks: blocks };
       }
 
-      case "audio":
-              return {
-                        type: "AUDIO",
-                        content: null,
-                        mediaId: message.audio?.id ?? null,
-                        mediaMimeType: message.audio?.mime_type ?? null,
-                        aiBlocks: [{ text: "[Cliente enviou um áudio. Transcrição não disponível — pergunte educadamente o que ele precisa em texto.]" }],
-              };
+      case "audio": {
+              const mediaId = message.audio?.id ?? null;
+              const mimeType = message.audio?.mime_type ?? "audio/ogg";
+              const blocks: Part[] = [];
+
+              if (mediaId) {
+                        const media = await downloadMedia(mediaId);
+                        if (media) {
+                                    blocks.push({ inlineData: { mimeType: baseMimeType(media.mimeType || mimeType), data: media.base64 } });
+                        }
+              }
+              blocks.push({
+                        text:
+                          blocks.length > 0
+                            ? "[Cliente enviou um áudio — ouça e entenda o que ele está pedindo, como se fosse uma mensagem de texto.]"
+                            : "[Cliente enviou um áudio, mas não foi possível baixar o conteúdo. Peça educadamente para ele repetir em texto.]",
+              });
+
+              return { type: "AUDIO", content: null, mediaId, mediaMimeType: mimeType, aiBlocks: blocks };
+      }
 
       case "video":
               return {
