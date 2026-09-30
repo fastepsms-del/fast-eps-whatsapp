@@ -57,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     replyText = result.replyText;
   } catch (error) {
     await logEvent({ scope: "ai", level: "error", message: `Falha ao processar turno de IA (Zapier): ${String(error)}`, metadata: { leadId: lead.id } });
-    replyText = await buildUnavailableFallback(lead.id);
+    replyText = await buildUnavailableFallback(lead.id, lead.lastInboundAt === null);
   }
 
   await recordMessage(lead.id, {
