@@ -42,7 +42,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await logEvent({
       scope: "admin",
       level: "info",
-      message: `Catch-up: reativados ${{stuckByTechnicalFailure.length} lead(s) que ficaram presos em "atendimento humano" por falha técnica.`,
+      message: `Catch-up: reativados ${stuckByTechnicalFailure.length} lead(s) que ficaram presos em "atendimento humano" por falha técnica.`,
     });
   }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await recordMessage(lead.id, {
         direction: "OUTBOUND",
         type: "TEMPLATE",
-        content: `[template: ${{kb.FOLLOW_UP_SETTINGS.messageTemplateName}]`,
+        content: `[template: ${kb.FOLLOW_UP_SETTINGS.messageTemplateName}]`,
         whatsappMessageId: templateResult.whatsappMessageId ?? null,
         status: templateResult.ok ? "SENT" : "FAILED",
       });
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await logEvent({
         scope: "ai",
         level: "error",
-        message: `Catch-up: falha ao processar lead ${{lead.id}: ${{String(error)}`,
+        message: `Catch-up: falha ao processar lead ${lead.id}: ${String(error)}`,
         metadata: { leadId: lead.id },
       });
       replyText = await buildUnavailableFallback(lead.id);
@@ -117,14 +117,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   await logEvent({
     scope: "admin",
     level: "info",
-    message: `Catch-up manual: ${{stuckByTechnicalFailure.length} reativados, ${{processed} respondidos, ${{reengagedOutsideWindow} reengajados via template, ${{failed} falharam ao enviar`,
+    message: `Catch-up manual: ${stuckByTechnicalFailure.length} reativados, ${processed} respondidos, ${reengagedOutsideWindow} reengajados via template, ${failed} falharam ao enviar`,
     metadata: { totalPendentes: pending.length },
   });
 
   const url = new URL("/admin/leads", request.url);
   url.searchParams.set(
     "catchup",
-    `${{pending.length}|${{processed}|${{failed}|${{reengagedOutsideWindow}|${{stuckByTechnicalFailure.length}`,
+    `${pending.length}|${processed}|${failed}|${reengagedOutsideWindow}|${stuckByTechnicalFailure.length}`,
   );
   return NextResponse.redirect(url, { status: 303 });
 }
