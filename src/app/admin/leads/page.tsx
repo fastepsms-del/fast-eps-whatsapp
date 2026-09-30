@@ -2,11 +2,13 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
 import { StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
-import type { LeadStatus, ProductInterest } from "@prisma/client";
+import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
+
+type RespondFilter = "now" | "recent" | "paused";
 
 interface SearchParams {
   q?: string;
@@ -17,31 +19,72 @@ interface SearchParams {
   handoff?: string;
   page?: string;
   catchup?: string;
+  respond?: string;
 }
 
 export default async function AdminLeadsListPage({ searchParams }: { searchParams: SearchParams }) {
-  const where: Record<string, unknown> = {};
-  if (searchParams.status) where.status = searchParams.status as LeadStatus;
-  if (searchParams.product) where.productInterest = searchParams.product as ProductInterest;
-  if (searchParams.city) where.city = { contains: searchParams.city, mode: "insensitive" };
-  if (searchParams.temperature) where.temperature = searchParams.temperature;
-  if (searchParams.handoff === "1") where.humanHandoff = true;
-  if (searchParams.q) {
-    const q = searchParams.q;
-    where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { profileName: { contains: q, mode: "insensitive" } },
-      { phone: { contains: q } },
-      { city: { contains: q, mode: "insensitive" } },
-    ];
-  }
+  const respondFilter = (["now", "recent", "paused"] as const).includes(searchParams.respond as RespondFilter)
+    ? (searchParams.respond as RespondFilter)
+    : undefined;
 
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
 
-  const [leads, total] = await Promise.all([
-    prisma.lead.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-    prisma.lead.count({ where }),
-  ]);
+  let leads: Lead[];
+  let total: number;
+
+  if (respondFilter) {
+    // "Responder agora" e "Respondido há pouco" dependem de comparar duas
+    // colunas da mesma linha (lastInboundAt x lastOutboundAt), o que o
+    // Prisma não expressa direto num where — busca o conjunto candidato e
+    // filtra/pagina em memória (volume de leads de uma PME, sem problema).
+    const where: Record<string, unknown> = {};
+    if (searchParams.status) where.status = searchParams.status as LeadStatus;
+    if (searchParams.product) where.productInterest = searchParams.product as ProductInterest;
+    if (searchParams.city) where.city = { contains: searchParams.city, mode: "insensitive" };
+    if (searchParams.temperature) where.temperature = searchParams.temperature;
+    if (searchParams.q) {
+      const q = searchParams.q;
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { profileName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q } },
+        { city: { contains: q, mode: "insensitive" } },
+      ];
+    }
+    if (respondFilter === "paused") {
+      where.OR = [...(where.OR as unknown[] ?? []), { humanHandoff: true }, { followUpPaused: true }];
+    }
+
+    const candidates = await prisma.lead.findMany({ where, orderBy: { updatedAt: "desc" } });
+    const filtered = candidates.filter((lead) => {
+      if (respondFilter === "paused") return lead.humanHandoff || lead.followUpPaused;
+      if (lead.humanHandoff) return false;
+      const needsReply = Boolean(lead.lastInboundAt) && (!lead.lastOutboundAt || lead.lastInboundAt! > lead.lastOutboundAt);
+      return respondFilter === "now" ? needsReply : !needsReply && Boolean(lead.lastOutboundAt);
+    });
+    total = filtered.length;
+    leads = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  } else {
+    const where: Record<string, unknown> = {};
+    if (searchParams.status) where.status = searchParams.status as LeadStatus;
+    if (searchParams.product) where.productInterest = searchParams.product as ProductInterest;
+    if (searchParams.city) where.city = { contains: searchParams.city, mode: "insensitive" };
+    if (searchParams.temperature) where.temperature = searchParams.temperature;
+    if (searchParams.handoff === "1") where.humanHandoff = true;
+    if (searchParams.q) {
+      const q = searchParams.q;
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { profileName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q } },
+        { city: { contains: q, mode: "insensitive" } },
+      ];
+    }
+    [leads, total] = await Promise.all([
+      prisma.lead.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+      prisma.lead.count({ where }),
+    ]);
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -53,8 +96,20 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
     if (searchParams.city) params.set("city", searchParams.city);
     if (searchParams.temperature) params.set("temperature", searchParams.temperature);
     if (searchParams.handoff) params.set("handoff", searchParams.handoff);
+    if (searchParams.respond) params.set("respond", searchParams.respond);
     params.set("page", String(targetPage));
-    return `/admin/leads?${params.toString()}`;
+    return `/admin/leads?${{params.toString()}`;
+  };
+
+  const buildRespondHref = (value: RespondFilter | null) => {
+    const params = new URLSearchParams();
+    if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.status) params.set("status", searchParams.status);
+    if (searchParams.product) params.set("product", searchParams.product);
+    if (searchParams.city) params.set("city", searchParams.city);
+    if (searchParams.temperature) params.set("temperature", searchParams.temperature);
+    if (value) params.set("respond", value);
+    return `/admin/leads${{params.toString() ? `?${{params.toString()}` : ""}`;
   };
 
   return (
@@ -64,7 +119,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
           <h1 className="text-lg font-semibold text-slate-800">Leads</h1>
           <p className="text-sm text-slate-500">
             {total} lead{total === 1 ? "" : "s"} no total
-            {searchParams.q || searchParams.status || searchParams.product || searchParams.city || searchParams.temperature || searchParams.handoff
+            {searchParams.q || searchParams.status || searchParams.product || searchParams.city || searchParams.temperature || searchParams.handoff || respondFilter
               ? " (filtrado)"
               : ""}
           </p>
@@ -81,6 +136,21 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
       </div>
 
       {searchParams.catchup && <CatchupBanner value={searchParams.catchup} />}
+
+      <div className="flex gap-2 border-b border-slate-200">
+        <RespondTab href={buildRespondHref(null)} active={!respondFilter}>
+          Todos
+        </RespondTab>
+        <RespondTab href={buildRespondHref("now")} active={respondFilter === "now"}>
+          Responder agora
+        </RespondTab>
+        <RespondTab href={buildRespondHref("recent")} active={respondFilter === "recent"}>
+          Respondido há pouco
+        </RespondTab>
+        <RespondTab href={buildRespondHref("paused")} active={respondFilter === "paused"}>
+          Não responder
+        </RespondTab>
+      </div>
 
       <form className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <Field label="Buscar">
@@ -117,10 +187,12 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
             <option value="FRIO">Frio</option>
           </select>
         </Field>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          <input type="checkbox" name="handoff" value="1" defaultChecked={searchParams.handoff === "1"} />
-          Só atendimento humano
-        </label>
+        {!respondFilter && (
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" name="handoff" value="1" defaultChecked={searchParams.handoff === "1"} />
+            Só atendimento humano
+          </label>
+        )}
         <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
           Filtrar
         </button>
@@ -161,7 +233,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
                   {lead.lastInboundAt ? new Date(lead.lastInboundAt).toLocaleString("pt-BR") : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/leads/${lead.id}`} className="text-brand-600 hover:underline">
+                  <Link href={`/admin/leads/${{lead.id}`} className="text-brand-600 hover:underline">
                     Ver conversa
                   </Link>
                 </td>
@@ -217,22 +289,35 @@ function PageLink({ href, disabled, children }: { href: string; disabled: boolea
   );
 }
 
+function RespondTab({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`border-b-2 px-3 py-2 text-sm font-medium ${{
+        active ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-800"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function CatchupBanner({ value }: { value: string }) {
   const parts = value.split("|").map((n) => Number(n) || 0);
   const total = parts[0] ?? 0;
   const processed = parts[1] ?? 0;
   const failed = parts[2] ?? 0;
-  const skipped = parts[3] ?? 0;
+  const reengaged = parts[3] ?? 0;
   const reactivated = parts[4] ?? 0;
   return (
     <div className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
       {reactivated > 0 &&
-        `${reactivated} lead(s) que tinham ficado travado(s) em "atendimento humano" por falha técnica foram reativados. `}
+        `${{reactivated} lead(s) que tinham ficado travado(s) em "atendimento humano" por falha técnica foram reativados. `}
       {total === 0
         ? "Nenhum lead pendente de resposta encontrado."
-        : `${processed} de ${total} lead(s) pendente(s) foram respondidos agora.`}
-      {failed > 0 && ` ${failed} falharam ao enviar (confira os Logs).`}
-      {skipped > 0 && ` ${skipped} ficaram fora da janela de 24h (aguardando o cliente escrever de novo, ou atendimento manual).`}
+        : `${{processed} de ${{total} lead(s) pendente(s) foram respondidos agora.`}
+      {reengaged > 0 && ` ${{reengaged} estavam fora da janela de 24h e receberam o template de reengajamento.`}
+      {failed > 0 && ` ${{failed} falharam ao enviar (confira os Logs).`}
     </div>
   );
 }
