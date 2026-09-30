@@ -98,7 +98,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
     if (searchParams.handoff) params.set("handoff", searchParams.handoff);
     if (searchParams.respond) params.set("respond", searchParams.respond);
     params.set("page", String(targetPage));
-    return `/admin/leads?${{params.toString()}`;
+    return `/admin/leads?${params.toString()}`;
   };
 
   const buildRespondHref = (value: RespondFilter | null) => {
@@ -109,7 +109,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
     if (searchParams.city) params.set("city", searchParams.city);
     if (searchParams.temperature) params.set("temperature", searchParams.temperature);
     if (value) params.set("respond", value);
-    return `/admin/leads${{params.toString() ? `?${{params.toString()}` : ""}`;
+    return `/admin/leads${params.toString() ? `?${params.toString()}` : ""}`;
   };
 
   return (
@@ -233,7 +233,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
                   {lead.lastInboundAt ? new Date(lead.lastInboundAt).toLocaleString("pt-BR") : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/leads/${{lead.id}`} className="text-brand-600 hover:underline">
+                  <Link href={`/admin/leads/${lead.id}`} className="text-brand-600 hover:underline">
                     Ver conversa
                   </Link>
                 </td>
@@ -293,7 +293,7 @@ function RespondTab({ href, active, children }: { href: string; active: boolean;
   return (
     <Link
       href={href}
-      className={`border-b-2 px-3 py-2 text-sm font-medium ${{
+      className={`border-b-2 px-3 py-2 text-sm font-medium ${
         active ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-800"
       }`}
     >
@@ -312,12 +312,12 @@ function CatchupBanner({ value }: { value: string }) {
   return (
     <div className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
       {reactivated > 0 &&
-        `${{reactivated} lead(s) que tinham ficado travado(s) em "atendimento humano" por falha técnica foram reativados. `}
+        `${reactivated} lead(s) que tinham ficado travado(s) em "atendimento humano" por falha técnica foram reativados. `}
       {total === 0
         ? "Nenhum lead pendente de resposta encontrado."
-        : `${{processed} de ${{total} lead(s) pendente(s) foram respondidos agora.`}
-      {reengaged > 0 && ` ${{reengaged} estavam fora da janela de 24h e receberam o template de reengajamento.`}
-      {failed > 0 && ` ${{failed} falharam ao enviar (confira os Logs).`}
+        : `${processed} de ${total} lead(s) pendente(s) foram respondidos agora.`}
+      {reengaged > 0 && ` ${reengaged} estavam fora da janela de 24h e receberam o template de reengajamento.`}
+      {failed > 0 && ` ${failed} falharam ao enviar (confira os Logs).`}
     </div>
   );
 }
