@@ -16,6 +16,7 @@ interface SearchParams {
   temperature?: string;
   handoff?: string;
   page?: string;
+  catchup?: string;
 }
 
 export default async function AdminLeadsListPage({ searchParams }: { searchParams: SearchParams }) {
@@ -58,15 +59,28 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Leads</h1>
-        <p className="text-sm text-slate-500">
-          {total} lead{total === 1 ? "" : "s"} no total
-          {searchParams.q || searchParams.status || searchParams.product || searchParams.city || searchParams.temperature || searchParams.handoff
-            ? " (filtrado)"
-            : ""}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-800">Leads</h1>
+          <p className="text-sm text-slate-500">
+            {total} lead{total === 1 ? "" : "s"} no total
+            {searchParams.q || searchParams.status || searchParams.product || searchParams.city || searchParams.temperature || searchParams.handoff
+              ? " (filtrado)"
+              : ""}
+          </p>
+        </div>
+        <form action="/api/admin/catchup" method="POST">
+          <button
+            type="submit"
+            className="shrink-0 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+            title="Reprocessa e responde todo lead cuja última mensagem foi do cliente e ainda não recebeu resposta"
+          >
+            Responder pendências
+          </button>
+        </form>
       </div>
+
+      {searchParams.catchup && <CatchupBanner value={searchParams.catchup} />}
 
       <form className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <Field label="Buscar">
@@ -200,5 +214,25 @@ function PageLink({ href, disabled, children }: { href: string; disabled: boolea
     <Link href={href} className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-600 hover:bg-slate-50">
       {children}
     </Link>
+  );
+}
+
+function CatchupBanner({ value }: { value: string }) {
+  const parts = value.split("|").map((n) => Number(n) || 0);
+  const total = parts[0] ?? 0;
+  const processed = parts[1] ?? 0;
+  const failed = parts[2] ?? 0;
+  const skipped = parts[3] ?? 0;
+  const reactivated = parts[4] ?? 0;
+  return (
+    <div className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+      {reactivated > 0 &&
+        `${reactivated} lead(s) que tinham ficado travado(s) em "atendimento humano" por falha técnica foram reativados. `}
+      {total === 0
+        ? "Nenhum lead pendente de resposta encontrado."
+        : `${processed} de ${total} lead(s) pendente(s) foram respondidos agora.`}
+      {failed > 0 && ` ${failed} falharam ao enviar (confira os Logs).`}
+      {skipped > 0 && ` ${skipped} ficaram fora da janela de 24h (aguardando o cliente escrever de novo, ou atendimento manual).`}
+    </div>
   );
 }
