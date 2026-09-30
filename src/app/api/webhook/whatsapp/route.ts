@@ -144,7 +144,7 @@ async function handleInboundMessage(message: Parameters<typeof mapInboundMessage
     replyText = result.replyText;
   } catch (error) {
     await logEvent({ scope: "ai", level: "error", message: `Falha ao processar turno de IA: ${String(error)}`, metadata: { leadId: lead.id } });
-    replyText = await buildUnavailableFallback(lead.id);
+    replyText = await buildUnavailableFallback(lead.id, lead.lastInboundAt === null);
   }
 
   const sendResult = await sendTextMessage(lead.phone, replyText);
