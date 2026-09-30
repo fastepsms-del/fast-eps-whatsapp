@@ -153,15 +153,26 @@ function functionResponsePart(call: FunctionCall, response: Record<string, unkno
     };
 }
 
-/** Usado pelo fallback quando a IA está indisponível (ver seção 42 do briefing). */
-export async function buildUnavailableFallback(leadId: string): Promise<string> {
-    const knowledgeBase = await getKnowledgeBase();
-    const lead = await getLeadById(leadId);
-    if (lead) {
-          await applyHumanHandoff(leadId, {
-                  category: "OUTRO",
-                  reason: "Falha técnica ao processar mensagem com a IA — encaminhado automaticamente.",
-          });
-    }
-    return knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage;
+/**
+ * Usado pelo fallback quando a IA está indisponível (ver seção 42 do briefing).
+ *
+ * Um lead cuja PRIMEIRA mensagem já falha tecnicamente (cota da IA, erro
+ * transitório etc.) nunca deve ficar travado em silêncio — geralmente é
+ * gente chegando pelo tráfego pago, e é o pior caso possível não responder.
+ * Só marcamos "atendimento humano" automaticamente quando o lead JÁ tinha
+ * histórico de conversa (algo quebrou no meio de um atendimento em
+ * andamento, aí sim faz sentido um humano assumir).
+ */
+export const TECHNICAL_FAILURE_HANDOFF_REASON = "Falha técnica ao processar mensagem com a IA — encaminhado automaticamente.";
+
+export async function buildUnavailableFallback(leadId: string, isFirstContact = false): Promise<string> {
+  const knowledgeBase = await getKnowledgeBase();
+  const lead = await getLeadById(leadId);
+  if (lead && !isFirstContact) {
+    await applyHumanHandoff(leadId, {
+      category: "OUTRO",
+      reason: TECHNICAL_FAILURE_HANDOFF_REASON,
+    });
+  }
+  return knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage;
 }
