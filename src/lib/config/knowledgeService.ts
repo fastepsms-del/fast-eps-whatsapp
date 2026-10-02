@@ -25,8 +25,13 @@ export async function getKnowledgeBase(options?: { skipCache?: boolean }): Promi
     for (const row of rows) {
       const key = row.key as KnowledgeKey;
       if (key in merged) {
+        const defaultValue = DEFAULT_KNOWLEDGE_BASE[key];
+        // Seções que são array (ex: PRODUCTS) são substituídas por completo;
+        // seções-objeto fazem merge campo a campo com o default, pra um campo
+        // novo adicionado depois que a seção já estava salva no banco (ex:
+        // GREETING_SETTINGS.fallbackErrorMessage) não vir undefined.
         // @ts-expect-error - o valor em runtime é validado por quem grava (admin API)
-        merged[key] = row.value;
+        merged[key] = Array.isArray(defaultValue) ? row.value : { ...defaultValue, ...(row.value as object) };
       }
     }
 

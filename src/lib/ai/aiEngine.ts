@@ -69,7 +69,7 @@ export async function processInboundTurn(
   }
 
   if (!replyText) {
-        replyText = knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage;
+        replyText = knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage || LAST_RESORT_FALLBACK_MESSAGE;
         await logEvent({
                 scope: "ai",
                 level: "warn",
@@ -165,6 +165,14 @@ function functionResponsePart(call: FunctionCall, response: Record<string, unkno
  */
 export const TECHNICAL_FAILURE_HANDOFF_REASON = "Falha técnica ao processar mensagem com a IA — encaminhado automaticamente.";
 
+/**
+ * Nunca mandamos texto vazio pro WhatsApp (a Meta rejeita com "text.body is
+ * required" e o lead fica sem nenhuma resposta). Último recurso caso a
+ * mensagem de fallback configurada esteja em branco.
+ */
+const LAST_RESORT_FALLBACK_MESSAGE =
+  "Desculpe, tive uma dificuldade para processar sua mensagem agora. Vou encaminhar você para nossa equipe para que possamos continuar seu atendimento.";
+
 export async function buildUnavailableFallback(leadId: string, isFirstContact = false): Promise<string> {
   const knowledgeBase = await getKnowledgeBase();
   const lead = await getLeadById(leadId);
@@ -174,5 +182,5 @@ export async function buildUnavailableFallback(leadId: string, isFirstContact = 
       reason: TECHNICAL_FAILURE_HANDOFF_REASON,
     });
   }
-  return knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage;
+  return knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage || LAST_RESORT_FALLBACK_MESSAGE;
 }

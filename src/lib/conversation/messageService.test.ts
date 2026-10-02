@@ -23,15 +23,15 @@ function fakeMessage(overrides: Partial<Message>): Message {
 }
 
 describe("buildChatHistory", () => {
-  it("converte inbound/outbound para user/assistant", () => {
+  it("converte inbound/outbound para user/model", () => {
     const messages = [
       fakeMessage({ id: "1", direction: "INBOUND", content: "oi" }),
       fakeMessage({ id: "2", direction: "OUTBOUND", content: "olá, tudo bem?" }),
     ];
     const chat = buildChatHistory(messages);
     expect(chat).toEqual([
-      { role: "user", content: "oi" },
-      { role: "assistant", content: "olá, tudo bem?" },
+      { role: "user", parts: [{ text: "oi" }] },
+      { role: "model", parts: [{ text: "olá, tudo bem?" }] },
     ]);
   });
 
@@ -43,7 +43,7 @@ describe("buildChatHistory", () => {
     ];
     const chat = buildChatHistory(messages);
     expect(chat).toHaveLength(2);
-    expect(chat[0]).toEqual({ role: "user", content: "oi\ntudo bem?" });
+    expect(chat[0]).toEqual({ role: "user", parts: [{ text: "oi\ntudo bem?" }] });
   });
 
   it("remove mensagens iniciais do assistente para começar com 'user'", () => {
@@ -56,16 +56,16 @@ describe("buildChatHistory", () => {
     expect(chat).toHaveLength(1);
   });
 
-  it("substitui o conteúdo da mensagem indicada por blocos ricos (ex: imagem)", () => {
+  it("substitui o conteúdo da mensagem indicada por partes ricas (ex: imagem)", () => {
     const messages = [fakeMessage({ id: "1", direction: "INBOUND", content: "foto" })];
-    const blocks = [{ type: "text" as const, text: "[imagem]" }];
-    const chat = buildChatHistory(messages, { messageId: "1", blocks });
-    expect(chat[0]).toEqual({ role: "user", content: blocks });
+    const parts = [{ text: "[imagem]" }];
+    const chat = buildChatHistory(messages, { messageId: "1", parts });
+    expect(chat[0]).toEqual({ role: "user", parts });
   });
 
   it("usa placeholder para mensagens de imagem sem legenda", () => {
     const messages = [fakeMessage({ id: "1", direction: "INBOUND", type: "IMAGE", content: null })];
     const chat = buildChatHistory(messages);
-    expect(chat[0]?.content).toBe("[imagem enviada pelo cliente]");
+    expect(chat[0]?.parts?.[0]).toEqual({ text: "[imagem enviada pelo cliente]" });
   });
 });
