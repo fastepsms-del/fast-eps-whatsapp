@@ -170,8 +170,7 @@ export const TECHNICAL_FAILURE_HANDOFF_REASON = "Falha técnica ao processar men
  * required" e o lead fica sem nenhuma resposta). Último recurso caso a
  * mensagem de fallback configurada esteja em branco.
  */
-const LAST_RESORT_FALLBACK_MESSAGE =
-  "Desculpe, tive uma dificuldade para processar sua mensagem agora. Vou encaminhar você para nossa equipe para que possamos continuar seu atendimento.";
+const LAST_RESORT_FALLBACK_MESSAGE = "Entendi! Vou te encaminhar para nossa equipe de atendimento, só um instante.";
 
 export async function buildUnavailableFallback(leadId: string, isFirstContact = false): Promise<string> {
   const knowledgeBase = await getKnowledgeBase();

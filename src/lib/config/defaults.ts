@@ -304,8 +304,6 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "Olá! Seja bem-vindo à Fast EPS 👋 Trabalhamos com soluções em EPS para construção e acabamento. " +
       "Você gostaria de saber mais sobre:\n1️⃣ Molduras em EPS\n2️⃣ Painel monolítico\n3️⃣ Solicitar orçamento\n" +
       "4️⃣ Tirar uma dúvida\n5️⃣ Falar com um atendente",
-    fallbackErrorMessage:
-      "Desculpe, tive uma dificuldade para processar sua mensagem agora. Vou encaminhar você para nossa " +
-      "equipe para que possamos continuar seu atendimento.",
+    fallbackErrorMessage: "Entendi! Vou te encaminhar para nossa equipe de atendimento, só um instante.",
   },
 };
