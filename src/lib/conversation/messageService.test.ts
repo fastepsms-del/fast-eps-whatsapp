@@ -68,4 +68,16 @@ describe("buildChatHistory", () => {
     const chat = buildChatHistory(messages);
     expect(chat[0]?.parts?.[0]).toEqual({ text: "[imagem enviada pelo cliente]" });
   });
+
+  it("marca mensagem outbound manual (atendente humano) para a IA não confundir com a própria voz", () => {
+    const messages = [
+      fakeMessage({ id: "1", direction: "INBOUND", content: "oi" }),
+      fakeMessage({ id: "2", direction: "OUTBOUND", content: "já te respondo!", isAutomated: false }),
+    ];
+    const chat = buildChatHistory(messages);
+    expect(chat[1]).toEqual({
+      role: "model",
+      parts: [{ text: "[MENSAGEM ENVIADA MANUALMENTE POR UM ATENDENTE HUMANO, NÃO POR VOCÊ]: já te respondo!" }],
+    });
+  });
 });

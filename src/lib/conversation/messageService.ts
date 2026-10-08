@@ -90,22 +90,33 @@ export function buildChatHistory(
 }
 
 function messageToPlaceholderText(msg: Message): string {
-    switch (msg.type) {
-      case "IMAGE":
-              return msg.content ? `[imagem enviada: ${msg.content}]` : "[imagem enviada pelo cliente]";
-      case "DOCUMENT":
-              return msg.content ? `[documento/projeto enviado: ${msg.content}]` : "[documento/projeto enviado pelo cliente]";
-      case "AUDIO":
-              return "[áudio enviado pelo cliente]";
-      case "VIDEO":
-              return "[vídeo enviado pelo cliente]";
-      case "LOCATION":
-              return "[localização enviada pelo cliente]";
-      case "TEMPLATE":
-              return msg.content ?? "[mensagem de template enviada]";
-      default:
-              return msg.content ?? "";
-    }
+    const text = (() => {
+          switch (msg.type) {
+            case "IMAGE":
+                        return msg.content ? `[imagem enviada: ${msg.content}]` : "[imagem enviada pelo cliente]";
+            case "DOCUMENT":
+                        return msg.content ? `[documento/projeto enviado: ${msg.content}]` : "[documento/projeto enviado pelo cliente]";
+            case "AUDIO":
+                        return "[áudio enviado pelo cliente]";
+            case "VIDEO":
+                        return "[vídeo enviado pelo cliente]";
+            case "LOCATION":
+                        return "[localização enviada pelo cliente]";
+            case "TEMPLATE":
+                        return msg.content ?? "[mensagem de template enviada]";
+            default:
+                        return msg.content ?? "";
+          }
+    })();
+
+  // Mensagens manuais (enviadas por um atendente humano pelo painel, não
+  // geradas pela IA) são marcadas explicitamente no histórico — sem isso, a
+  // IA não tem como distinguir a própria voz de uma intervenção humana real
+  // e pode acabar respondendo por cima de quem já está atendendo.
+  if (msg.direction === "OUTBOUND" && !msg.isAutomated) {
+        return `[MENSAGEM ENVIADA MANUALMENTE POR UM ATENDENTE HUMANO, NÃO POR VOCÊ]: ${text}`;
+  }
+    return text;
 }
 
 export function leadDisplayName(lead: Lead): string {
