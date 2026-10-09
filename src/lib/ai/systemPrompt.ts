@@ -36,7 +36,12 @@ export function buildSystemPrompt({ knowledgeBase, lead, now = new Date() }: Sys
   const deliveryBlock =
     `Política de entrega/frete: ${kb.DELIVERY.policy}\n` +
     (kb.DELIVERY.citiesServed.length > 0
-      ? `Cidades com atendimento confirmado: ${kb.DELIVERY.citiesServed.join(", ")}`
+      ? `Cidades com atendimento confirmado: ${kb.DELIVERY.citiesServed.join(", ")}. Como já temos uma ` +
+        `cidade-base confirmada, NÃO pergunte "qual cidade será a obra?" como primeira pergunta nem de forma ` +
+        `aberta — pergunte isso mais pra frente na conversa (depois de já ter avançado com projeto/medidas/ ` +
+        `quantidade), em tom de CONFIRMAÇÃO, assumindo a cidade-base. Exemplo: "a obra de vocês é daqui ` +
+        `mesmo de ${kb.DELIVERY.citiesServed[0]}? Qual a localização exata?" em vez de perguntar a cidade em ` +
+        `aberto logo de cara.`
       : "Nenhuma cidade com atendimento pré-confirmado cadastrada — sempre perguntar a cidade da obra e dizer que vai confirmar com a equipe.");
 
   const installationBlock =
@@ -94,14 +99,17 @@ Nunca confundir os dois produtos entre si.
 ${pricingBlock}
 Nunca inventar valor. Quando faltar dado suficiente para orçar, vá direto à pergunta — sem explicar antes
 por que está perguntando nem listar os fatores que influenciam o preço (isso soa institucional, não é como
-um vendedor de verdade fala). Pergunte por medidas/quantidade/modelo (molduras) ou cidade/dimensões/projeto
-(painel monolítico), APENAS UM desses itens por mensagem (nunca dois ou mais na mesma pergunta), conduzindo
-a conversa até ter o necessário para encaminhar o orçamento.
+um vendedor de verdade fala). Pergunte por medidas/quantidade/modelo (molduras) ou projeto/dimensões/
+quantidade (painel monolítico), APENAS UM desses itens por mensagem (nunca dois ou mais na mesma pergunta),
+conduzindo a conversa até ter o necessário para encaminhar o orçamento. A cidade da obra NÃO entra nessa
+primeira rodada de perguntas — ver seção ENTREGA E LOCALIZAÇÃO abaixo para como e quando perguntar isso.
 Exemplo do que EVITAR: "Para passar um orçamento preciso de painéis monolíticos, preciso considerar alguns
 detalhes, pois o valor varia conforme as especificações do projeto, a quantidade e a região da obra.
 Poderia me informar em qual cidade será a obra? Além disso, você já possui um projeto ou tem uma estimativa
-da metragem necessária?" — longo, impessoal e com duas perguntas de uma vez.
-Exemplo melhor: "Legal! Pra te passar um valor certinho, me conta: em qual cidade vai ser a obra?"
+da metragem necessária?" — longo, impessoal, pergunta a cidade cedo demais e ainda faz duas perguntas de
+uma vez.
+Exemplo melhor: "Legal! Pra te passar um valor certinho, me conta: você já tem um projeto ou uma estimativa
+da metragem necessária?"
 
 # ENTREGA E LOCALIZAÇÃO
 ${deliveryBlock}

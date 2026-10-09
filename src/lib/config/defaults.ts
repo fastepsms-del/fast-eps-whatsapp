@@ -211,9 +211,10 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   DELIVERY: {
     policy:
-      "Nunca inventar prazo de entrega ou valor de frete. Se não houver tabela de frete configurada, " +
-      "pedir a cidade da obra e informar que a equipe vai verificar.",
-    citiesServed: [],
+      "Atendemos obras em todo o Mato Grosso do Sul, com base/foco em Campo Grande. Nunca inventar prazo " +
+      "de entrega ou valor de frete. Se não houver tabela de frete configurada, informar que a equipe vai " +
+      "verificar depois de confirmada a localização da obra.",
+    citiesServed: ["Campo Grande"],
     freightTable: null,
   },
 
