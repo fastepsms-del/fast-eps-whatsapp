@@ -64,13 +64,19 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           <input
             name="message"
             required
-            placeholder={lead.humanHandoff ? "Responder manualmente ao cliente..." : "Enviar mensagem manual (a IA continuará respondendo depois)"}
+            placeholder="Responder manualmente ao cliente..."
             className="select flex-1"
           />
           <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
             Enviar
           </button>
         </form>
+        {!lead.humanHandoff && (
+          <p className="mt-1 text-xs text-slate-400">
+            Enviar aqui pausa a IA automaticamente para este lead — só o humano responde até alguém clicar em
+            &quot;Reativar atendimento automático&quot;.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-4">
