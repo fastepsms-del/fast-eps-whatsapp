@@ -200,9 +200,17 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   PRICING: {
     policy:
-      "Nunca inventar preço. Se não houver tabela cadastrada para o produto, explicar que o valor depende " +
-      "de modelo/medidas/quantidade/acabamento (molduras) ou de cidade/dimensões/projeto (painel) e " +
-      "conduzir a coleta de dados para orçamento. Sem tabela cadastrada, encaminhar para atendimento humano.",
+      "Nunca inventar preço. A Fast EPS trabalha com projeto: só dá pra gerar uma estimativa de verdade " +
+      "com projeto (ou medidas) e a informação do que precisa ser feito — sem isso não tem como criar " +
+      "expectativa de valor pro cliente, e vale enfatizar isso na conversa. Painel monolítico é cobrado " +
+      "por METRO QUADRADO DE PAREDE, não de terreno/área construída — ex: um galpão logístico de 200m² é " +
+      "bem diferente de uma kitnet de 200m², porque a kitnet tem parede, divisória, banheiro, cozinha, e " +
+      "tudo isso conta como metragem de parede, enquanto o galpão pode ter pouca parede proporcionalmente. " +
+      "O valor final também varia conforme a modalidade de atendimento escolhida (ver seção INSTALAÇÃO): " +
+      "só entrega dos materiais, entrega com instalação pela equipe da Fast EPS, ou entrega com " +
+      "treinamento da equipe técnica local. Molduras: valor depende de modelo/medidas/quantidade/ " +
+      "acabamento. Sem tabela cadastrada para o produto, conduzir a coleta de dados pro orçamento e, " +
+      "quando pronto, encaminhar para atendimento humano.",
     priceTables: {
       MOLDURA_EPS: null,
       PAINEL_MONOLITICO: null,
@@ -220,10 +228,15 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   INSTALLATION: {
     policy:
-      "Não afirmar que existe instalação disponível se isso não estiver confirmado aqui. Quando não " +
-      "confirmado, oferecer verificar com a equipe a disponibilidade para a região do cliente.",
-    offersInstallation: null,
-    regionsAvailable: [],
+      "A Fast EPS oferece três modalidades de atendimento, válidas tanto para molduras em EPS quanto para " +
+      "painel monolítico, cada uma com seu próprio valor: (1) só entrega dos materiais; (2) entrega + " +
+      "equipe técnica da Fast EPS vai até a obra fazer a instalação; (3) entrega + equipe técnica da Fast " +
+      "EPS vai até a obra treinar a equipe técnica local para fazer a instalação. A escolha é sempre do " +
+      "cliente — ter a Fast EPS instalando NUNCA é obrigatório, é uma opção a mais. Apresentar essas três " +
+      "opções como diferencial da empresa no momento certo da conversa (quando fizer sentido no contexto, " +
+      "nunca como lista solta ou discurso de abertura).",
+    offersInstallation: true,
+    regionsAvailable: ["Mato Grosso do Sul (todo o estado)"],
   },
 
   TECHNICAL_INFORMATION: {
@@ -234,8 +247,11 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "O desempenho acústico depende da composição completa da parede e dos demais elementos construtivos; " +
       "não prometer número específico sem dados técnicos.",
     structuralNotes:
-      "Capacidade estrutural depende do sistema, dimensionamento, aplicação e execução corretos. Não " +
-      "prometer números sem informações técnicas do projeto.",
+      "O EPS em si NÃO tem função estrutural — ele funciona como molde/forma. Quem dá a função estrutural " +
+      "ao sistema é a composição ao redor dele: argamassa, travas/travamentos e chapisco, que juntos " +
+      "garantem a estruturação completa. Capacidade estrutural específica depende do dimensionamento, " +
+      "aplicação e execução corretos de cada projeto — não prometer números sem informações técnicas do " +
+      "projeto.",
     paintingCompatibility:
       "Pode ser pintado dependendo do sistema de acabamento utilizado, com produtos compatíveis.",
     outdoorUse:
