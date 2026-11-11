@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import type { LeadStatus, ProductInterest } from "@prisma/client";
+import type { LeadStatus, PipelineStage, ProductInterest } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       measurements: toStringOrNull("measurements"),
       desiredDate: toStringOrNull("desiredDate"),
       notes: toStringOrNull("notes"),
+      assignedToName: toStringOrNull("assignedToName"),
+      pipelineStage: (form.get("pipelineStage") as PipelineStage) || null,
       followUpPaused: form.get("followUpPaused") === "1",
     },
   });

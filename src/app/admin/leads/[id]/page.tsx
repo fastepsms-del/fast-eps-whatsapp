@@ -2,7 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
-import { StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
+import {
+  AssigneeBadge,
+  PIPELINE_STAGE_LABELS,
+  PIPELINE_STAGE_VALUES,
+  PipelineStageBadge,
+  StatusBadge,
+  TemperatureBadge,
+} from "@/components/StatusBadge";
 import type { MessageStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +48,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           <div className="flex shrink-0 flex-col items-end gap-1">
             <StatusBadge status={lead.status} handoff={lead.humanHandoff} />
             <TemperatureBadge temperature={lead.temperature} />
+            <PipelineStageBadge stage={lead.pipelineStage} />
+            <AssigneeBadge name={lead.assignedToName} />
           </div>
         </div>
 
@@ -90,6 +99,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             <LabeledInput label="Quantidade" name="quantity" defaultValue={lead.quantity ?? ""} />
             <LabeledInput label="Medidas" name="measurements" defaultValue={lead.measurements ?? ""} />
             <LabeledInput label="Previsão da obra" name="desiredDate" defaultValue={lead.desiredDate ?? ""} />
+            <LabeledInput label="Atendido por (nome)" name="assignedToName" defaultValue={lead.assignedToName ?? ""} />
+            <LabeledSelect
+              label="Etapa do processo"
+              name="pipelineStage"
+              defaultValue={lead.pipelineStage ?? ""}
+              options={[...PIPELINE_STAGE_VALUES]}
+              labels={PIPELINE_STAGE_LABELS}
+              includeBlank
+            />
             <label className="flex items-center gap-2">
               <input type="checkbox" name="followUpPaused" value="1" defaultChecked={lead.followUpPaused} />
               Pausar follow-up automático
@@ -165,14 +183,29 @@ function LabeledInput({ label, name, defaultValue }: { label: string; name: stri
   );
 }
 
-function LabeledSelect({ label, name, defaultValue, options }: { label: string; name: string; defaultValue: string; options: string[] }) {
+function LabeledSelect({
+  label,
+  name,
+  defaultValue,
+  options,
+  labels,
+  includeBlank,
+}: {
+  label: string;
+  name: string;
+  defaultValue: string;
+  options: string[];
+  labels?: Record<string, string>;
+  includeBlank?: boolean;
+}) {
   return (
     <label className="flex flex-col">
       <span className="mb-1 text-slate-500">{label}</span>
       <select name={name} defaultValue={defaultValue} className="select">
+        {includeBlank && <option value="">—</option>}
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {labels?.[o] ?? o}
           </option>
         ))}
       </select>

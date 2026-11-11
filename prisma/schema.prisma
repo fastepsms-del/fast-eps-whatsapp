@@ -38,6 +38,18 @@ enum LeadTemperature {
   QUENTE
 }
 
+/// Etapa do processo interno de atendimento — etiqueta manual da equipe,
+/// separada do LeadStatus (que é controlado pela IA). Usada para visualizar
+/// rapidamente em qual parte do processo o lead está ao passar a conversa
+/// de uma pessoa para outra (SDR -> orçamento -> fechamento -> entrega...).
+enum PipelineStage {
+  PROSPECCAO
+  ORCAMENTO
+  PAGAMENTO
+  ENTREGA
+  POS_VENDA
+}
+
 /// Produto de interesse principal identificado na conversa.
 enum ProductInterest {
   INDEFINIDO
@@ -150,6 +162,12 @@ model Lead {
   humanHandoffReason   String?
   humanHandoffCategory HandoffCategory?
   humanHandoffAt       DateTime?
+
+  /// Nome de quem está atendendo manualmente agora (ex: "Caio", "Tony", "Gilmar").
+  /// Etiqueta livre preenchida pela equipe pelo painel, não pela IA.
+  assignedToName String?
+  /// Etapa do processo (etiqueta manual da equipe) — ver enum PipelineStage.
+  pipelineStage  PipelineStage?
 
   followUpCount  Int       @default(0)
   lastFollowUpAt DateTime?

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
-import { StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
+import { AssigneeBadge, PipelineStageBadge, StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
 import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -210,6 +210,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
               <th className="px-4 py-3">Cidade</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Temperatura</th>
+              <th className="px-4 py-3">Etapa / Atendente</th>
               <th className="px-4 py-3">Última msg.</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -229,6 +230,12 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
                 <td className="px-4 py-3">
                   <TemperatureBadge temperature={lead.temperature} />
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-col items-start gap-1">
+                    <PipelineStageBadge stage={lead.pipelineStage} />
+                    <AssigneeBadge name={lead.assignedToName} />
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-xs text-slate-400">
                   {lead.lastInboundAt ? new Date(lead.lastInboundAt).toLocaleString("pt-BR") : "—"}
                 </td>
@@ -241,7 +248,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
             ))}
             {leads.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                   Nenhum lead encontrado para este filtro.
                 </td>
               </tr>
