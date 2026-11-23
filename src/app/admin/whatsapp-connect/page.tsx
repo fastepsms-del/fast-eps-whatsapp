@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const APP_ID = "1403363668433200";
-const CONFIG_ID = "1918155442511005";
+const CONFIG_ID = "1124240880457533";
 
 declare global {
   interface Window {
