@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { getKnowledgeBase } from "@/lib/config/knowledgeService";
 import { isWithinBusinessHours } from "@/lib/businessHours";
-import { sendTemplateMessage, sendTextMessage } from "@/lib/whatsapp/client";
+import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { logEvent } from "@/lib/logger";
 import type { Lead, LeadStatus } from "@prisma/client";
@@ -65,7 +65,8 @@ async function sendFollowUpToLead(
 ): Promise<boolean> {
   const hoursSinceLastInbound = lead.lastInboundAt ? (now.getTime() - lead.lastInboundAt.getTime()) / (1000 * 60 * 60) : Infinity;
 
-  const withinFreeWindow = hoursSinceLastInbound < FREE_TEXT_WINDOW_HOURS;
+  // Só a Cloud API da Meta limita texto livre a 24h; com Evolution API sempre dá pra mandar texto.
+  const withinFreeWindow = !usesTemplates() || hoursSinceLastInbound < FREE_TEXT_WINDOW_HOURS;
 
   const result = withinFreeWindow
     ? await sendTextMessage(lead.phone, settings.fallbackMessage)

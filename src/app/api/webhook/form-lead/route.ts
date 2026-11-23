@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { logEvent } from "@/lib/logger";
 import { findOrCreateLeadByPhone } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
-import { sendTemplateMessage } from "@/lib/whatsapp/client";
+import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import type { LeadTemperature, ProductInterest } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -113,17 +113,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const template = process.env.FORM_TEMPLATE_NAME || "novo_lead_formulario";
   const firstName = (name ?? "").split(/\s+/)[0] || "tudo bem";
-  const result = await sendTemplateMessage(phone, template, "pt_BR", [firstName, product.label]);
+  // Com Evolution API não existe template aprovado: a abertura vai como texto livre.
+  const openingText = `Oi, ${firstName}! Aqui é da Fast EPS. Recebi seu formulário sobre ${product.label} e vou te ajudar por aqui. Pode me contar um pouco mais sobre o que você precisa?`;
+  const viaTemplate = usesTemplates();
+  const result = viaTemplate
+    ? await sendTemplateMessage(phone, template, "pt_BR", [firstName, product.label])
+    : await sendTextMessage(phone, openingText);
 
   if (!result.ok) {
-    await logEvent({ scope: "webhook", level: "error", message: `Formulário: falha ao enviar template ao lead ${lead.id}: ${result.errorMessage}`, metadata: { leadId: lead.id } });
+    await logEvent({ scope: "webhook", level: "error", message: `Formulário: falha ao enviar mensagem inicial ao lead ${lead.id}: ${result.errorMessage}`, metadata: { leadId: lead.id } });
     return NextResponse.json({ ok: true, sent: false, reason: "send_failed" });
   }
 
   await recordMessage(lead.id, {
     direction: "OUTBOUND",
-    type: "TEMPLATE",
-    content: `[template: ${template}] ${firstName} · ${product.label}`,
+    type: viaTemplate ? "TEMPLATE" : "TEXT",
+    content: viaTemplate ? `[template: ${template}] ${firstName} · ${product.label}` : openingText,
     whatsappMessageId: result.whatsappMessageId ?? null,
   });
   await prisma.lead.update({ where: { id: lead.id }, data: { lastOutboundAt: new Date() } });

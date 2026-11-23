@@ -1,4 +1,16 @@
 import { logEvent } from "@/lib/logger";
+import { evolutionDownloadMedia, evolutionSendText } from "./evolutionClient";
+
+export type WhatsAppProvider = "meta" | "evolution";
+
+export function whatsappProvider(): WhatsAppProvider {
+  return process.env.WHATSAPP_PROVIDER === "evolution" ? "evolution" : "meta";
+}
+
+/** Só a Cloud API da Meta tem janela de 24h e exige template fora dela. */
+export function usesTemplates(): boolean {
+  return whatsappProvider() === "meta";
+}
 
 function graphBaseUrl(): string {
   const version = process.env.WHATSAPP_GRAPH_API_VERSION || "v20.0";
@@ -37,6 +49,7 @@ export interface SendResult {
 
 /** Envia uma mensagem de texto simples dentro da janela de 24h de atendimento. */
 export async function sendTextMessage(to: string, body: string): Promise<SendResult> {
+  if (whatsappProvider() === "evolution") return evolutionSendText(to, body);
   return sendPayload({
     messaging_product: "whatsapp",
     to,
@@ -57,6 +70,9 @@ export async function sendTemplateMessage(
   languageCode = "pt_BR",
   bodyParams: string[] = [],
 ): Promise<SendResult> {
+  if (!usesTemplates()) {
+    return { ok: false, errorMessage: "Templates não existem no Evolution API; envie texto livre." };
+  }
   return sendPayload({
     messaging_product: "whatsapp",
     to,
@@ -99,6 +115,7 @@ async function sendPayload(payload: Record<string, unknown>): Promise<SendResult
 }
 
 export async function markMessageAsRead(whatsappMessageId: string): Promise<void> {
+  if (whatsappProvider() === "evolution") return;
   try {
     await graphFetch(`/${phoneNumberId()}/messages`, {
       method: "POST",
@@ -121,6 +138,7 @@ export interface DownloadedMedia {
 
 /** Resolve a URL temporária de uma mídia e baixa o conteúdo em base64. */
 export async function downloadMedia(mediaId: string): Promise<DownloadedMedia | null> {
+  if (whatsappProvider() === "evolution") return evolutionDownloadMedia(mediaId);
   try {
     const metaResponse = await graphFetch(`/${mediaId}`, { method: "GET" });
     const meta = (await metaResponse.json()) as { url?: string; mime_type?: string; error?: { message: string } };

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { processInboundTurn, buildUnavailableFallback, TECHNICAL_FAILURE_HANDOFF_REASON } from "@/lib/ai/aiEngine";
-import { sendTemplateMessage, sendTextMessage } from "@/lib/whatsapp/client";
+import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { touchLeadOutbound, reactivateAutomation } from "@/lib/leads/leadService";
 import { getKnowledgeBase } from "@/lib/config/knowledgeService";
 import { logEvent } from "@/lib/logger";
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   for (const lead of pending) {
     const hoursSinceLastInbound = (Date.now() - lead.lastInboundAt!.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceLastInbound >= FREE_TEXT_WINDOW_HOURS) {
+    if (usesTemplates() && hoursSinceLastInbound >= FREE_TEXT_WINDOW_HOURS) {
       // Fora da janela de 24h: a Meta bloqueia texto livre. Manda o template
       // aprovado de reengajamento pra reabrir a conversa — quando o cliente
       // responder, a IA volta a atender normalmente com texto livre.
