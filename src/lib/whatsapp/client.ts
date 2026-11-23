@@ -1,5 +1,5 @@
 import { logEvent } from "@/lib/logger";
-import { evolutionDownloadMedia, evolutionSendText } from "./evolutionClient";
+import { evolutionDownloadMedia, evolutionSendMedia, evolutionSendText } from "./evolutionClient";
 
 export type WhatsAppProvider = "meta" | "evolution";
 
@@ -45,6 +45,30 @@ export interface SendResult {
   ok: boolean;
   whatsappMessageId?: string;
   errorMessage?: string;
+}
+
+export type OutboundMediaKind = "image" | "video" | "audio" | "document";
+
+export interface OutboundMedia {
+  kind: OutboundMediaKind;
+  base64: string;
+  mimeType: string;
+  fileName: string;
+  caption?: string;
+}
+
+/** Define como o arquivo vai aparecer no WhatsApp (foto, vídeo, áudio ou documento) a partir do tipo MIME. */
+export function mediaKindFromMime(mimeType: string): OutboundMediaKind {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  return "document";
+}
+
+/** Envia foto, vídeo, áudio ou documento. Só disponível com o Evolution API. */
+export async function sendMediaMessage(to: string, media: OutboundMedia): Promise<SendResult> {
+  if (whatsappProvider() === "evolution") return evolutionSendMedia(to, media);
+  return { ok: false, errorMessage: "Envio de mídia pelo painel só está disponível com o Evolution API." };
 }
 
 /** Envia uma mensagem de texto simples dentro da janela de 24h de atendimento. */

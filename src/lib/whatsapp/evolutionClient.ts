@@ -1,4 +1,4 @@
-import type { DownloadedMedia, SendResult } from "./client";
+import type { DownloadedMedia, OutboundMedia, SendResult } from "./client";
 import { logEvent } from "@/lib/logger";
 
 interface EvolutionConfig {
@@ -53,6 +53,40 @@ export async function evolutionSendText(to: string, body: string): Promise<SendR
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     await logEvent({ scope: "whatsapp", level: "error", message: `Exceção ao enviar mensagem (Evolution): ${errorMessage}`, metadata: { to } });
+    return { ok: false, errorMessage };
+  }
+}
+
+/** Envia foto, vídeo, documento (endpoint sendMedia) ou áudio como mensagem de voz (sendWhatsAppAudio). */
+export async function evolutionSendMedia(to: string, media: OutboundMedia): Promise<SendResult> {
+  try {
+    const isAudio = media.kind === "audio";
+    const response = await evolutionFetch(instancePath(isAudio ? "/message/sendWhatsAppAudio" : "/message/sendMedia"), {
+      method: "POST",
+      body: JSON.stringify(
+        isAudio
+          ? { number: to, audio: media.base64, encoding: true }
+          : {
+              number: to,
+              mediatype: media.kind,
+              mimetype: media.mimeType,
+              caption: media.caption ?? "",
+              media: media.base64,
+              fileName: media.fileName,
+            },
+      ),
+    });
+    const json = (await response.json().catch(() => null)) as { key?: { id?: string } } | null;
+
+    if (!response.ok || !json?.key?.id) {
+      const errorMessage = describeError(json, response.status);
+      await logEvent({ scope: "whatsapp", level: "error", message: `Falha ao enviar mídia (Evolution): ${errorMessage}`, metadata: { to, kind: media.kind } });
+      return { ok: false, errorMessage };
+    }
+    return { ok: true, whatsappMessageId: json.key.id };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await logEvent({ scope: "whatsapp", level: "error", message: `Exceção ao enviar mídia (Evolution): ${errorMessage}`, metadata: { to, kind: media.kind } });
     return { ok: false, errorMessage };
   }
 }

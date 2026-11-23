@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
 import { AssigneeBadge, PipelineStageBadge, StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
+import { AutoRefresh } from "@/components/AutoRefresh";
+import { getCurrentSession } from "@/lib/session";
 import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,7 @@ interface SearchParams {
 }
 
 export default async function AdminLeadsListPage({ searchParams }: { searchParams: SearchParams }) {
+  const isAdmin = (await getCurrentSession())?.role === "ADMIN";
   const respondFilter = (["now", "recent", "paused"] as const).includes(searchParams.respond as RespondFilter)
     ? (searchParams.respond as RespondFilter)
     : undefined;
@@ -121,6 +124,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
 
   return (
     <div className="flex flex-col gap-6">
+      <AutoRefresh seconds={15} />
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold text-slate-800">Leads</h1>
@@ -131,15 +135,17 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
               : ""}
           </p>
         </div>
-        <form action="/api/admin/catchup" method="POST">
-          <button
-            type="submit"
-            className="shrink-0 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
-            title="Reprocessa e responde todo lead cuja última mensagem foi do cliente e ainda não recebeu resposta"
-          >
-            Responder pendências
-          </button>
-        </form>
+        {isAdmin && (
+          <form action="/api/admin/catchup" method="POST">
+            <button
+              type="submit"
+              className="shrink-0 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+              title="Reprocessa e responde todo lead cuja última mensagem foi do cliente e ainda não recebeu resposta"
+            >
+              Responder pendências
+            </button>
+          </form>
+        )}
       </div>
 
       {searchParams.catchup && <CatchupBanner value={searchParams.catchup} />}
@@ -255,7 +261,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
                           {preview}
                         </p>
                         <p className="text-[10px] text-slate-400">
-                          {new Date(lastMessage.createdAt).toLocaleString("pt-BR")}
+                          {new Date(lastMessage.createdAt).toLocaleString("pt-BR", { timeZone: "America/Campo_Grande" })}
                         </p>
                       </div>
                     );

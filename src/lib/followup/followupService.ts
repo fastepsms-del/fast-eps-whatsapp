@@ -24,6 +24,12 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
     return { candidates: 0, sent: 0, skippedOutsideHours: false };
   }
 
+  // Follow-up é mensagem que a Fast EPS manda primeiro; numa conexão não oficial isso
+  // aumenta o risco de bloqueio do número, então fica desligado a menos que EVOLUTION_FOLLOWUPS=on.
+  if (!usesTemplates() && process.env.EVOLUTION_FOLLOWUPS !== "on") {
+    return { candidates: 0, sent: 0, skippedOutsideHours: false };
+  }
+
   if (!isWithinBusinessHours(kb.BUSINESS_HOURS, now)) {
     return { candidates: 0, sent: 0, skippedOutsideHours: true };
   }

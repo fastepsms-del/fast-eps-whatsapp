@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendTextMessage } from "@/lib/whatsapp/client";
 import { recordMessage } from "@/lib/conversation/messageService";
-import { applyHumanHandoff, touchLeadOutbound } from "@/lib/leads/leadService";
+import { finishManualReply } from "@/lib/leads/manualReply";
+import { getSessionFromRequest } from "@/lib/session";
 
 export const runtime = "nodejs";
-
-const MANUAL_HANDOFF_REASON = "Atendente humano respondeu manualmente pelo painel — atendimento humano assumiu a conversa.";
 
 /**
  * Envio manual de mensagem pelo painel (atendente humano respondendo).
@@ -30,10 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       status: result.ok ? "SENT" : "FAILED",
       isAutomated: false,
     });
-    await touchLeadOutbound(lead.id);
-    if (!lead.humanHandoff) {
-      await applyHumanHandoff(lead.id, { category: "OUTRO", reason: MANUAL_HANDOFF_REASON });
-    }
+    await finishManualReply(lead, await getSessionFromRequest(request));
   }
 
   return NextResponse.redirect(new URL(`/admin/leads/${params.id}`, request.url), { status: 303 });

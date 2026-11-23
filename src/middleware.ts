@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/adminAuth";
+import { ADMIN_COOKIE_NAME, isPathAllowedForRole, verifySessionToken } from "@/lib/adminAuth";
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -21,6 +21,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (!isPathAllowedForRole(pathname, session.role)) {
+    if (pathname.startsWith("/api/admin")) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/admin/leads", request.url));
   }
 
   return NextResponse.next();

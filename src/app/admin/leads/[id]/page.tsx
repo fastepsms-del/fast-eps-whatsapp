@@ -10,18 +10,36 @@ import {
   StatusBadge,
   TemperatureBadge,
 } from "@/components/StatusBadge";
-import type { MessageStatus } from "@prisma/client";
+import { LiveConversation } from "@/components/LiveConversation";
+import { MediaSendForm } from "@/components/MediaSendForm";
+import { CONVERSATION_MESSAGE_LIMIT, toClientMessage } from "@/lib/conversation/clientMessage";
+import { MAX_MEDIA_BYTES } from "@/lib/conversation/mediaLimits";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+const NOTICES: Record<string, string> = {
+  sem_arquivo: "Escolha um arquivo para enviar.",
+  arquivo_grande: `Arquivo grande demais (máximo ${MAX_MEDIA_BYTES / (1024 * 1024)} MB).`,
+  falha_envio: "Não foi possível enviar o arquivo.",
+};
+
+export default async function LeadDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { notice?: string; detail?: string };
+}) {
   const lead = await prisma.lead.findUnique({ where: { id: params.id } });
   if (!lead) notFound();
 
-  const messages = await prisma.message.findMany({
+  const recentMessages = await prisma.message.findMany({
     where: { leadId: lead.id },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
+    take: CONVERSATION_MESSAGE_LIMIT,
   });
+  const messages = recentMessages.reverse().map(toClientMessage);
+  const notice = searchParams.notice ? NOTICES[searchParams.notice] : undefined;
 
   const displayName = lead.name ?? lead.profileName ?? lead.phone;
   const initials = displayName
@@ -53,21 +71,14 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        <div className="flex h-[60vh] flex-col gap-3 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
-          {messages.map((m) => (
-            <div key={m.id} className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${m.direction === "INBOUND" ? "self-start bg-slate-100 text-slate-800" : "self-end bg-brand-600 text-white"}`}>
-              <div className="whitespace-pre-wrap">{m.content ?? `[${m.type}]`}</div>
-              <div className={`mt-1 flex items-center gap-1 text-[10px] ${m.direction === "INBOUND" ? "text-slate-400" : "text-brand-100"}`}>
-                <span>{new Date(m.createdAt).toLocaleString("pt-BR")}</span>
-                {m.isFollowUp && <span>· follow-up</span>}
-                {m.direction === "OUTBOUND" && !m.isAutomated && <span>· manual</span>}
-                {m.intent && <span>· {m.intent}</span>}
-                {m.direction === "OUTBOUND" && <MessageStatusIcon status={m.status} />}
-              </div>
-            </div>
-          ))}
-          {messages.length === 0 && <p className="text-sm text-slate-400">Nenhuma mensagem ainda.</p>}
-        </div>
+        {notice && (
+          <p className="mb-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            {notice}
+            {searchParams.notice === "falha_envio" && searchParams.detail ? ` (${searchParams.detail})` : ""}
+          </p>
+        )}
+
+        <LiveConversation leadId={lead.id} initialMessages={messages} />
 
         <form action={`/api/admin/leads/${lead.id}/send`} method="POST" className="mt-3 flex gap-2">
           <input
@@ -80,6 +91,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             Enviar
           </button>
         </form>
+        <MediaSendForm leadId={lead.id} />
         {!lead.humanHandoff && (
           <p className="mt-1 text-xs text-slate-400">
             Enviar aqui pausa a IA automaticamente para este lead — só o humano responde até alguém clicar em
@@ -147,30 +159,6 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         )}
       </div>
     </div>
-  );
-}
-
-function MessageStatusIcon({ status }: { status: MessageStatus }) {
-  if (status === "FAILED") {
-    return (
-      <svg viewBox="0 0 16 16" className="h-3 w-3 text-red-300" fill="none">
-        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (status === "QUEUED" || status === "SENT") {
-    return (
-      <svg viewBox="0 0 16 16" className="h-3 w-3 text-brand-200" fill="none">
-        <path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 20 16" className={`h-3 w-4 ${status === "READ" ? "text-sky-200" : "text-brand-200"}`} fill="none">
-      <path d="M1 8.5 4.5 12 11 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 8.5 10.5 12 19 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 

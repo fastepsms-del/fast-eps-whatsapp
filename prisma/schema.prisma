@@ -244,6 +244,28 @@ model ApiKey {
   @@map("api_keys")
 }
 
+/// Papel de um usuário do painel: ADMIN vê e configura tudo; ATTENDANT só
+/// atende conversas (leads, histórico, envio de mensagens e mídia).
+enum AdminRole {
+  ADMIN
+  ATTENDANT
+}
+
+/// Usuário do painel com login próprio (além do login-mestre das variáveis de
+/// ambiente, que continua funcionando como administrador).
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  displayName  String
+  passwordHash String
+  role         AdminRole @default(ATTENDANT)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  @@map("admin_users")
+}
+
 /// Log simples de eventos/erros de integração (WhatsApp, IA, webhook, banco).
 model IntegrationLog {
   id        String   @id @default(cuid())
