@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * segredo em query string (INTERNAL_CHECK_SECRET). Remover esta rota e a
  * variável depois de confirmar que funcionou.
  */
-const WABA_ID = "1788934272228503";
+const DEFAULT_WABA_ID = "1788934272228503";
 
 function graphBaseUrl(): string {
   const version = process.env.WHATSAPP_GRAPH_API_VERSION || "v20.0";
@@ -24,6 +24,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!expected || secret !== expected) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
+
+  const WABA_ID = request.nextUrl.searchParams.get("waba") || DEFAULT_WABA_ID;
 
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   if (!token) {
