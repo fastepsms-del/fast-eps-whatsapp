@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Rota de uso único: usa o WHATSAPP_ACCESS_TOKEN já configurado no Vercel
- * para verificar (e, se preciso, corrigir) a inscrição do app na WABA
- * correta (1788934272228503, "fast eps" / GLK Engenharia), sem precisar
- * gerar ou expor nenhum token novo. Protegida pelo middleware admin.
- * Remover esta rota depois de confirmar que funcionou.
+ * Rota de uso único (fora de /api/admin, não depende de cookie de login):
+ * usa o WHATSAPP_ACCESS_TOKEN já configurado no Vercel para checar se o
+ * app está inscrito nos webhooks da WABA 1788934272228503 ("fast eps",
+ * GLK Engenharia) e, se não estiver, inscreve via POST. Protegida por um
+ * segredo em query string (INTERNAL_CHECK_SECRET). Remover esta rota e a
+ * variável depois de confirmar que funcionou.
  */
 const WABA_ID = "1788934272228503";
 
@@ -17,7 +18,13 @@ function graphBaseUrl(): string {
   return `https://graph.facebook.com/${version}`;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const secret = request.nextUrl.searchParams.get("secret");
+  const expected = process.env.INTERNAL_CHECK_SECRET;
+  if (!expected || secret !== expected) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   if (!token) {
     return NextResponse.json({ ok: false, error: "WHATSAPP_ACCESS_TOKEN não configurado" }, { status: 500 });
@@ -31,8 +38,11 @@ export async function GET(): Promise<NextResponse> {
   const alreadySubscribed =
     beforeResponse.ok && Array.isArray(before?.data) && before.data.length > 0;
 
+  const phoneNumbersResponse = await fetch(`${graphBaseUrl()}/${WABA_ID}/phone_numbers`, { headers });
+  const phoneNumbers = await phoneNumbersResponse.json();
+
   if (alreadySubscribed) {
-    return NextResponse.json({ ok: true, action: "none", alreadySubscribed: true, before });
+    return NextResponse.json({ ok: true, action: "none", alreadySubscribed: true, before, phoneNumbers });
   }
 
   const subscribeResponse = await fetch(`${graphBaseUrl()}/${WABA_ID}/subscribed_apps`, {
@@ -50,5 +60,6 @@ export async function GET(): Promise<NextResponse> {
     before,
     subscribeResult,
     after,
+    phoneNumbers,
   });
 }
