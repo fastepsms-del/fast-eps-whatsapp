@@ -43,17 +43,17 @@ export default function WhatsAppConnectPage() {
     document.body.appendChild(script);
 
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
+      if (!event.origin.includes("facebook.com")) return;
+      log(`[postMessage de ${event.origin}] ${typeof event.data === "string" ? event.data : JSON.stringify(event.data)}`);
       try {
-        const data = JSON.parse(event.data);
-        if (data.type === "WA_EMBEDDED_SIGNUP") {
-          log(`Evento do Facebook: ${JSON.stringify(data.data ?? data)}`);
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data?.type === "WA_EMBEDDED_SIGNUP") {
           if (data.data && (data.data.phone_number_id || data.data.waba_id)) {
             setSignupData(data.data);
           }
         }
       } catch {
-        // mensagens não-JSON do Facebook são ignoradas
+        // mensagens não-JSON são só logadas acima
       }
     }
     window.addEventListener("message", handleMessage);
