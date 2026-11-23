@@ -86,6 +86,13 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
     ]);
   }
 
+  const lastMessages = await Promise.all(
+    leads.map((lead) =>
+      prisma.message.findFirst({ where: { leadId: lead.id }, orderBy: { createdAt: "desc" } }),
+    ),
+  );
+  const lastMessageByLeadId = new Map(leads.map((lead, i) => [lead.id, lastMessages[i]]));
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const buildPageHref = (targetPage: number) => {
@@ -211,7 +218,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Temperatura</th>
               <th className="px-4 py-3">Etapa / Atendente</th>
-              <th className="px-4 py-3">Última msg.</th>
+              <th className="px-4 py-3">Última mensagem</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -236,8 +243,23 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
                     <AssigneeBadge name={lead.assignedToName} />
                   </div>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400">
-                  {lead.lastInboundAt ? new Date(lead.lastInboundAt).toLocaleString("pt-BR") : "—"}
+                <td className="max-w-[220px] px-4 py-3">
+                  {(() => {
+                    const lastMessage = lastMessageByLeadId.get(lead.id);
+                    if (!lastMessage) return <span className="text-xs text-slate-400">—</span>;
+                    const preview = lastMessage.content ?? `[${lastMessage.type}]`;
+                    return (
+                      <div>
+                        <p className="truncate text-xs text-slate-600" title={preview}>
+                          {lastMessage.direction === "OUTBOUND" ? "↳ " : ""}
+                          {preview}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {new Date(lastMessage.createdAt).toLocaleString("pt-BR")}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Link href={`/admin/leads/${lead.id}`} className="text-brand-600 hover:underline">

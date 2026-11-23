@@ -43,8 +43,9 @@ enum LeadTemperature {
 /// rapidamente em qual parte do processo o lead está ao passar a conversa
 /// de uma pessoa para outra (SDR -> orçamento -> fechamento -> entrega...).
 enum PipelineStage {
-  PROSPECCAO
-  ORCAMENTO
+  SDR
+  CLOSER
+  ORCAMENTO_ENVIADO
   PAGAMENTO
   ENTREGA
   POS_VENDA
@@ -225,6 +226,22 @@ model KnowledgeConfig {
   updatedBy String?
 
   @@map("knowledge_config")
+}
+
+/// Chave de API para integração de sistemas externos (CRM, automações, etc)
+/// com a API pública em /api/v1. O valor em texto puro só existe no momento
+/// da criação (mostrado uma única vez); só o hash é armazenado.
+model ApiKey {
+  id         String    @id @default(cuid())
+  label      String
+  keyHash    String    @unique
+  keyPrefix  String // primeiros caracteres da chave, só para exibição/identificação na lista
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  @@map("api_keys")
 }
 
 /// Log simples de eventos/erros de integração (WhatsApp, IA, webhook, banco).

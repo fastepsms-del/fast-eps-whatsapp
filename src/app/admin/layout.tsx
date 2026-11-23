@@ -4,6 +4,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Painel" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/settings", label: "Configurações" },
+  { href: "/admin/api-keys", label: "Chaves de API" },
   { href: "/admin/logs", label: "Logs" },
 ];
 

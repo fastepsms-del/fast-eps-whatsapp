@@ -18,19 +18,28 @@ export function TemperatureBadge({ temperature }: { temperature: string }) {
 }
 
 /** Etapa do processo — etiqueta manual da equipe, separada do status controlado pela IA. */
-export const PIPELINE_STAGE_VALUES = ["PROSPECCAO", "ORCAMENTO", "PAGAMENTO", "ENTREGA", "POS_VENDA"] as const;
+export const PIPELINE_STAGE_VALUES = [
+  "SDR",
+  "CLOSER",
+  "ORCAMENTO_ENVIADO",
+  "PAGAMENTO",
+  "ENTREGA",
+  "POS_VENDA",
+] as const;
 
 export const PIPELINE_STAGE_LABELS: Record<string, string> = {
-  PROSPECCAO: "Prospecção",
-  ORCAMENTO: "Orçamento",
+  SDR: "Com o SDR",
+  CLOSER: "Com o closer",
+  ORCAMENTO_ENVIADO: "Orçamento enviado",
   PAGAMENTO: "Pagamento",
   ENTREGA: "Entrega",
   POS_VENDA: "Pós-venda",
 };
 
 const PIPELINE_STAGE_STYLES: Record<string, string> = {
-  PROSPECCAO: "bg-sky-100 text-sky-700",
-  ORCAMENTO: "bg-amber-100 text-amber-700",
+  SDR: "bg-sky-100 text-sky-700",
+  CLOSER: "bg-purple-100 text-purple-700",
+  ORCAMENTO_ENVIADO: "bg-amber-100 text-amber-700",
   PAGAMENTO: "bg-emerald-100 text-emerald-700",
   ENTREGA: "bg-indigo-100 text-indigo-700",
   POS_VENDA: "bg-brand-100 text-brand-700",
