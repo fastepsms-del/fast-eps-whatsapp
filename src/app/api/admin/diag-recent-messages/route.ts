@@ -10,13 +10,15 @@ export const dynamic = "force-dynamic";
  * "parado" numa data antiga. Protegida pelo middleware admin.
  */
 export async function GET(): Promise<NextResponse> {
-  const [recentMessages, recentErrorLogs, recentWhatsappLogs, leadCount, messageCount] = await Promise.all([
-    prisma.message.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
-    prisma.integrationLog.findMany({ where: { level: "error" }, orderBy: { createdAt: "desc" }, take: 10 }),
-    prisma.integrationLog.findMany({ where: { scope: "whatsapp" }, orderBy: { createdAt: "desc" }, take: 10 }),
-    prisma.lead.count(),
-    prisma.message.count(),
-  ]);
+  const [recentMessages, recentErrorLogs, recentWhatsappLogs, leadCount, messageCount, topLeadsByUpdatedAt] =
+    await Promise.all([
+      prisma.message.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
+      prisma.integrationLog.findMany({ where: { level: "error" }, orderBy: { createdAt: "desc" }, take: 10 }),
+      prisma.integrationLog.findMany({ where: { scope: "whatsapp" }, orderBy: { createdAt: "desc" }, take: 10 }),
+      prisma.lead.count(),
+      prisma.message.count(),
+      prisma.lead.findMany({ orderBy: { updatedAt: "desc" }, take: 10 }),
+    ]);
 
   return NextResponse.json({
     now: new Date().toISOString(),
@@ -25,5 +27,6 @@ export async function GET(): Promise<NextResponse> {
     recentMessages,
     recentErrorLogs,
     recentWhatsappLogs,
+    topLeadsByUpdatedAt,
   });
 }
