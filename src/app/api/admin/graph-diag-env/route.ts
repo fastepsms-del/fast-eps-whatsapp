@@ -69,3 +69,31 @@ export async function GET(): Promise<NextResponse> {
     wabas,
   });
 }
+
+/** Ajuste único: define o fuso (America/Campo_Grande = 23) na WABA — erro 141007. */
+export async function POST(): Promise<NextResponse> {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+  if (!token || !wabaId) {
+    return NextResponse.json({ error: "variáveis ausentes" }, { status: 500 });
+  }
+  const version = process.env.WHATSAPP_GRAPH_API_VERSION || "v20.0";
+  const base = `https://graph.facebook.com/${version}`;
+  const update = await (
+    await fetch(`${base}/${wabaId}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ timezone_id: "23" }),
+    })
+  ).json();
+  const after = await (
+    await fetch(`${base}/${wabaId}?fields=timezone_id`, { headers: { Authorization: `Bearer ${token}` } })
+  ).json();
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const health = phoneId
+    ? await (
+        await fetch(`${base}/${phoneId}?fields=health_status`, { headers: { Authorization: `Bearer ${token}` } })
+      ).json()
+    : null;
+  return NextResponse.json({ update, after, health });
+}
