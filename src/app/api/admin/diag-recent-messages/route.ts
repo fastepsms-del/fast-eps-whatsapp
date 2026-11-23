@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * "parado" numa data antiga. Protegida pelo middleware admin.
  */
 export async function GET(): Promise<NextResponse> {
-  const [recentMessages, recentErrorLogs, recentWhatsappLogs, leadCount, messageCount, topLeadsByUpdatedAt] =
+  const [recentMessages, recentErrorLogs, recentWhatsappLogs, leadCount, messageCount, topLeadsByUpdatedAt, recentAnyLogs] =
     await Promise.all([
       prisma.message.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
       prisma.integrationLog.findMany({ where: { level: "error" }, orderBy: { createdAt: "desc" }, take: 10 }),
@@ -18,6 +18,7 @@ export async function GET(): Promise<NextResponse> {
       prisma.lead.count(),
       prisma.message.count(),
       prisma.lead.findMany({ orderBy: { updatedAt: "desc" }, take: 10 }),
+      prisma.integrationLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     ]);
 
   return NextResponse.json({
@@ -28,5 +29,6 @@ export async function GET(): Promise<NextResponse> {
     recentErrorLogs,
     recentWhatsappLogs,
     topLeadsByUpdatedAt,
+    recentAnyLogs,
   });
 }
