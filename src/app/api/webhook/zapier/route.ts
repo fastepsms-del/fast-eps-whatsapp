@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logEvent } from "@/lib/logger";
 import { findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
+import { isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback } from "@/lib/ai/aiEngine";
 
 export const runtime = "nodejs";
@@ -50,6 +51,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await logEvent({ scope: "webhook", level: "info", message: "Mensagem recebida (Zapier) durante atendimento humano, IA não respondeu", metadata: { leadId: lead.id } });
     return NextResponse.json({ reply: null });
   }
+
+  if (await isAiPaused()) return NextResponse.json({ reply: null });
 
   let replyText: string;
   try {

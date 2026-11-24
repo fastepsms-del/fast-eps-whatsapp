@@ -4,6 +4,7 @@ import { mapInboundMessage } from "./inboundMapper";
 import { markMessageAsRead, sendTextMessage } from "./client";
 import { findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
+import { isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback } from "@/lib/ai/aiEngine";
 
 export interface StatusUpdate {
@@ -66,6 +67,11 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
   // reativar a automação pelo painel administrativo.
   if (lead.humanHandoff) {
     await logEvent({ scope: "webhook", level: "info", message: `Mensagem recebida durante atendimento humano, IA não respondeu`, metadata: { leadId: lead.id } });
+    return;
+  }
+
+  if (await isAiPaused()) {
+    await logEvent({ scope: "webhook", level: "info", message: "IA pausada no painel, mensagem registrada sem resposta", metadata: { leadId: lead.id } });
     return;
   }
 

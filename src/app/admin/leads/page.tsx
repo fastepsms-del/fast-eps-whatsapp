@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
 import { AssigneeBadge, PipelineStageBadge, StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { isAiPaused } from "@/lib/aiSwitch";
 import { getCurrentSession } from "@/lib/session";
 import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
 
@@ -26,6 +27,7 @@ interface SearchParams {
 
 export default async function AdminLeadsListPage({ searchParams }: { searchParams: SearchParams }) {
   const isAdmin = (await getCurrentSession())?.role === "ADMIN";
+  const aiPaused = await isAiPaused();
   const respondFilter = (["now", "recent", "paused"] as const).includes(searchParams.respond as RespondFilter)
     ? (searchParams.respond as RespondFilter)
     : undefined;
@@ -125,6 +127,28 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh seconds={15} />
+      {isAdmin && (
+        <form
+          action="/api/admin/ai-switch"
+          method="POST"
+          className={`flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${
+            aiPaused ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          <span>
+            {aiPaused
+              ? "IA PAUSADA: ninguém recebe resposta automática (as mensagens continuam chegando aqui)."
+              : "IA ligada: respondendo os clientes automaticamente."}
+          </span>
+          <input type="hidden" name="paused" value={aiPaused ? "0" : "1"} />
+          <button
+            type="submit"
+            className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-white ${aiPaused ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
+          >
+            {aiPaused ? "Ligar a IA" : "Pausar a IA"}
+          </button>
+        </form>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold text-slate-800">Leads</h1>

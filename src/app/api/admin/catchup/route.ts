@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { recordMessage } from "@/lib/conversation/messageService";
+import { isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback, TECHNICAL_FAILURE_HANDOFF_REASON } from "@/lib/ai/aiEngine";
 import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { touchLeadOutbound, reactivateAutomation } from "@/lib/leads/leadService";
@@ -30,6 +31,10 @@ const FREE_TEXT_WINDOW_HOURS = 24;
  *    esse template em vez de deixar o lead sem nenhuma mensagem.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (await isAiPaused()) {
+    return NextResponse.redirect(new URL("/admin/leads?catchup=ia_pausada", request.url), { status: 303 });
+  }
+
   const stuckByTechnicalFailure = await prisma.lead.findMany({
     where: { humanHandoff: true, humanHandoffReason: TECHNICAL_FAILURE_HANDOFF_REASON },
   });
