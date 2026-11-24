@@ -32,6 +32,43 @@ export default function WhatsAppEvolutionPage() {
     return () => clearInterval(timer);
   }, [refresh]);
 
+  const [importLog, setImportLog] = useState<string>("");
+  const [importing, setImporting] = useState(false);
+
+  async function runImport() {
+    setImporting(true);
+    setImportLog("Importando...");
+    let offset = 0;
+    let messages = 0;
+    let leads = 0;
+    try {
+      for (let guard = 0; guard < 2000; guard += 1) {
+        const response = await fetch("/api/admin/evolution/import-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ offset }),
+        });
+        const json = await response.json();
+        if (!json.ok) {
+          setImportLog(`Erro: ${json.error ?? "falha"}`);
+          return;
+        }
+        messages += json.messages;
+        leads += json.newLeads;
+        offset = json.next;
+        setImportLog(`Conversa ${Math.min(offset, json.total)} de ${json.total}: ${messages} mensagens, ${leads} contatos novos...`);
+        if (json.done) {
+          setImportLog(`Pronto: ${messages} mensagens importadas e ${leads} contatos novos no painel.`);
+          return;
+        }
+      }
+    } catch (error) {
+      setImportLog(`Erro: ${String(error)}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function runSetup() {
     setLoading(true);
     try {
@@ -84,6 +121,16 @@ export default function WhatsAppEvolutionPage() {
       >
         {loading ? "Configurando..." : "Configurar instância e webhook"}
       </button>
+
+      <button
+        onClick={runImport}
+        disabled={importing || !status?.connected}
+        className="ml-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        title="Traz as conversas antigas do celular para o painel (a IA não responde nelas)"
+      >
+        {importing ? "Importando..." : "Importar histórico do celular"}
+      </button>
+      {importLog && <p className="mt-2 text-sm text-slate-600">{importLog}</p>}
 
       {setupResult != null && (
         <pre className="mt-4 max-h-[50vh] overflow-auto rounded-md bg-slate-900 p-3 text-xs text-slate-100">

@@ -183,3 +183,36 @@ export async function buildUnavailableFallback(leadId: string, isFirstContact = 
   }
   return knowledgeBase.GREETING_SETTINGS.fallbackErrorMessage || LAST_RESORT_FALLBACK_MESSAGE;
 }
+
+
+/**
+ * Escreve um follow-up sob medida lendo a conversa inteira. Devolve null quando não vale a pena
+ * insistir (cliente recusou, já fechou, assunto encerrado ou transferido para humano).
+ */
+export async function generateFollowUpText(lead: Lead): Promise<string | null> {
+  const knowledgeBase = await getKnowledgeBase();
+  const systemPrompt = buildSystemPrompt({ knowledgeBase, lead });
+  const history = await getRecentMessages(lead.id);
+  const contents = buildChatHistory(history);
+  contents.push({
+    role: "user",
+    parts: [
+      {
+        text:
+          "[INSTRUÇÃO INTERNA, não é uma mensagem do cliente] O cliente parou de responder. Leia a conversa acima e " +
+          "escreva UMA mensagem curta de follow-up, natural, no mesmo tom da conversa, retomando exatamente o ponto em que " +
+          "paramos (produto, medidas, orçamento, o que faltou). Não repita o que já foi dito e não use frases genéricas. " +
+          "Se o cliente já recusou, disse que não tem interesse, já fechou ou o assunto acabou, responda somente: NENHUM",
+      },
+    ],
+  });
+
+  const response = await getGeminiClient().models.generateContent({
+    model: getGeminiModel(),
+    contents,
+    config: { systemInstruction: systemPrompt, maxOutputTokens: MAX_RESPONSE_TOKENS },
+  });
+  const text = (response.text ?? "").trim();
+  if (!text || /^nenhum\b/i.test(text)) return null;
+  return text;
+}

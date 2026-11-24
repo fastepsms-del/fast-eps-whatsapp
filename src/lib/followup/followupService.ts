@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { getKnowledgeBase } from "@/lib/config/knowledgeService";
 import { isWithinBusinessHours } from "@/lib/businessHours";
+import { generateFollowUpText } from "@/lib/ai/aiEngine";
+import { getNewLeadsOnlySince, isAiPaused } from "@/lib/aiSwitch";
 import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { logEvent } from "@/lib/logger";
@@ -24,9 +26,9 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
     return { candidates: 0, sent: 0, skippedOutsideHours: false };
   }
 
-  // Follow-up é mensagem que a Fast EPS manda primeiro; numa conexão não oficial isso
-  // aumenta o risco de bloqueio do número, então fica desligado a menos que EVOLUTION_FOLLOWUPS=on.
-  if (!usesTemplates() && process.env.EVOLUTION_FOLLOWUPS !== "on") {
+  // Com IA pausada ou com follow-up desligado explicitamente (EVOLUTION_FOLLOWUPS=off), nada é enviado.
+  if (await isAiPaused()) return { candidates: 0, sent: 0, skippedOutsideHours: false };
+  if (!usesTemplates() && process.env.EVOLUTION_FOLLOWUPS === "off") {
     return { candidates: 0, sent: 0, skippedOutsideHours: false };
   }
 
@@ -48,7 +50,11 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
     },
   });
 
+  // Follow-up só para leads que a IA atende (os criados depois do início dela), nunca para histórico importado.
+  const onlyNewSince = await getNewLeadsOnlySince();
+
   const eligible = candidates.filter((lead) => {
+    if (onlyNewSince && lead.createdAt < onlyNewSince) return false;
     if (!lead.lastOutboundAt || !lead.lastInboundAt) return false;
     if (lead.lastInboundAt >= lead.lastOutboundAt) return false;
     if (lead.lastFollowUpAt && lead.lastFollowUpAt > minIntervalThreshold) return false;
@@ -74,8 +80,23 @@ async function sendFollowUpToLead(
   // Só a Cloud API da Meta limita texto livre a 24h; com Evolution API sempre dá pra mandar texto.
   const withinFreeWindow = !usesTemplates() || hoursSinceLastInbound < FREE_TEXT_WINDOW_HOURS;
 
+  let followUpText = settings.fallbackMessage;
+  if (withinFreeWindow) {
+    try {
+      const generated = await generateFollowUpText(lead);
+      if (generated === null) {
+        // Conversa encerrada ou cliente sem interesse: conta como tentativa e não insiste.
+        await prisma.lead.update({ where: { id: lead.id }, data: { followUpCount: { increment: 1 }, lastFollowUpAt: now } });
+        return false;
+      }
+      followUpText = generated;
+    } catch (error) {
+      await logEvent({ scope: "cron", level: "warn", message: `IA não gerou follow-up para ${lead.id}, usando texto padrão: ${String(error)}` });
+    }
+  }
+
   const result = withinFreeWindow
-    ? await sendTextMessage(lead.phone, settings.fallbackMessage)
+    ? await sendTextMessage(lead.phone, followUpText)
     : await sendTemplateMessage(lead.phone, settings.messageTemplateName);
 
   if (!result.ok) {
@@ -91,7 +112,7 @@ async function sendFollowUpToLead(
   await recordMessage(lead.id, {
     direction: "OUTBOUND",
     type: withinFreeWindow ? "TEXT" : "TEMPLATE",
-    content: withinFreeWindow ? settings.fallbackMessage : `[template: ${settings.messageTemplateName}]`,
+    content: withinFreeWindow ? followUpText : `[template: ${settings.messageTemplateName}]`,
     whatsappMessageId: result.whatsappMessageId ?? null,
     isFollowUp: true,
   });

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     alwaysOnline: false,
     readMessages: false,
     readStatus: false,
-    syncFullHistory: false,
+    syncFullHistory: true,
   });
 
   return NextResponse.json({ ok: true, webhookUrlConfigured: webhookUrl.replace(secret, "***"), results });

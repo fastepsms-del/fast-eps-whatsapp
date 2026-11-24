@@ -113,3 +113,31 @@ export async function evolutionDownloadMedia(messageId: string): Promise<Downloa
     return null;
   }
 }
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/** Extrai a lista de registros de respostas do Evolution, que variam entre array puro e { messages: { records } }. */
+function extractRecords(json: any): any[] {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.messages?.records)) return json.messages.records;
+  if (Array.isArray(json?.records)) return json.records;
+  if (Array.isArray(json?.messages)) return json.messages;
+  return [];
+}
+
+/** Conversas conhecidas pelo Evolution (precisa de DATABASE_SAVE_DATA_CHATS=true no servidor). */
+export async function evolutionFindChats(): Promise<any[]> {
+  const response = await evolutionFetch(instancePath("/chat/findChats"), { method: "POST", body: JSON.stringify({}) });
+  if (!response.ok) throw new Error(`findChats HTTP ${response.status}`);
+  return extractRecords(await response.json().catch(() => null));
+}
+
+/** Uma página de mensagens de uma conversa, da mais recente para a mais antiga. */
+export async function evolutionFindMessages(remoteJid: string, page: number, pageSize = 100): Promise<any[]> {
+  const response = await evolutionFetch(instancePath("/chat/findMessages"), {
+    method: "POST",
+    body: JSON.stringify({ where: { key: { remoteJid } }, page, offset: pageSize }),
+  });
+  if (!response.ok) throw new Error(`findMessages HTTP ${response.status}`);
+  return extractRecords(await response.json().catch(() => null));
+}
