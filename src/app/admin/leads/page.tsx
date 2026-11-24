@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
 import { AssigneeBadge, PipelineStageBadge, StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { usesTemplates } from "@/lib/whatsapp/client";
 import { isAiPaused } from "@/lib/aiSwitch";
 import { getCurrentSession } from "@/lib/session";
 import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
@@ -159,7 +160,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
               : ""}
           </p>
         </div>
-        {isAdmin && (
+        {isAdmin && usesTemplates() && (
           <form action="/api/admin/catchup" method="POST">
             <button
               type="submit"
@@ -172,7 +173,7 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
         )}
       </div>
 
-      {searchParams.catchup && <CatchupBanner value={searchParams.catchup} />}
+      {searchParams.catchup && searchParams.catchup !== "desativado" && searchParams.catchup !== "ia_pausada" && <CatchupBanner value={searchParams.catchup} />}
 
       <div className="flex gap-2 border-b border-slate-200">
         <RespondTab href={buildRespondHref(null)} active={!respondFilter}>

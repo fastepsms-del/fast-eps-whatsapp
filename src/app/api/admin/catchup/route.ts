@@ -31,6 +31,10 @@ const FREE_TEXT_WINDOW_HOURS = 24;
  *    esse template em vez de deixar o lead sem nenhuma mensagem.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!usesTemplates()) {
+    // Modo Evolution: a IA responde só o que chegar de agora em diante, sem varrer pendências antigas.
+    return NextResponse.redirect(new URL("/admin/leads?catchup=desativado", request.url), { status: 303 });
+  }
   if (await isAiPaused()) {
     return NextResponse.redirect(new URL("/admin/leads?catchup=ia_pausada", request.url), { status: 303 });
   }

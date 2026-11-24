@@ -7,6 +7,8 @@ import { recordMessage } from "@/lib/conversation/messageService";
 import { isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback } from "@/lib/ai/aiEngine";
 
+const STALE_MESSAGE_MS = 10 * 60 * 1000;
+
 export interface StatusUpdate {
   id: string;
   status: string;
@@ -67,6 +69,14 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
   // reativar a automação pelo painel administrativo.
   if (lead.humanHandoff) {
     await logEvent({ scope: "webhook", level: "info", message: `Mensagem recebida durante atendimento humano, IA não respondeu`, metadata: { leadId: lead.id } });
+    return;
+  }
+
+  // A IA só responde o que chega de agora em diante: mensagem antiga (reenvio do
+  // provedor, histórico sincronizado ao conectar o número) é só registrada.
+  const sentAtMs = Number(message.timestamp) * 1000;
+  if (Number.isFinite(sentAtMs) && sentAtMs > 0 && Date.now() - sentAtMs > STALE_MESSAGE_MS) {
+    await logEvent({ scope: "webhook", level: "info", message: "Mensagem antiga, IA não respondeu", metadata: { leadId: lead.id } });
     return;
   }
 
