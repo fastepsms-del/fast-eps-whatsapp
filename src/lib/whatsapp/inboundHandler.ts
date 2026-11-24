@@ -4,7 +4,7 @@ import { mapInboundMessage } from "./inboundMapper";
 import { markMessageAsRead, sendTextMessage } from "./client";
 import { findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
-import { isAiPaused } from "@/lib/aiSwitch";
+import { getNewLeadsOnlySince, isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback } from "@/lib/ai/aiEngine";
 
 const STALE_MESSAGE_MS = 10 * 60 * 1000;
@@ -49,6 +49,8 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
   const alreadyProcessed = await prisma.message.findUnique({ where: { whatsappMessageId: message.id } });
   if (alreadyProcessed) return;
 
+  // Precisa ser lido antes de criar o lead: na primeira vez grava "agora" como marco.
+  const onlyNewSince = await getNewLeadsOnlySince();
   const lead = await findOrCreateLeadByPhone(message.from, profileName);
   await touchLeadInbound(lead.id);
 
@@ -77,6 +79,12 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
   const sentAtMs = Number(message.timestamp) * 1000;
   if (Number.isFinite(sentAtMs) && sentAtMs > 0 && Date.now() - sentAtMs > STALE_MESSAGE_MS) {
     await logEvent({ scope: "webhook", level: "info", message: "Mensagem antiga, IA não respondeu", metadata: { leadId: lead.id } });
+    return;
+  }
+
+  // Por enquanto a IA só atende quem nunca falou com a gente: lead que já existia é ignorado.
+  if (onlyNewSince && lead.createdAt < onlyNewSince) {
+    await logEvent({ scope: "webhook", level: "info", message: "Lead anterior ao início da IA, IA não respondeu", metadata: { leadId: lead.id } });
     return;
   }
 
