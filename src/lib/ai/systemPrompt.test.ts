@@ -44,7 +44,8 @@ describe("buildSystemPrompt", () => {
   });
 
   it("nunca inventa tempo de mercado quando não cadastrado", () => {
-    const prompt = buildSystemPrompt({ knowledgeBase: DEFAULT_KNOWLEDGE_BASE, lead: fakeLead() });
+    const knowledgeBase = { ...DEFAULT_KNOWLEDGE_BASE, COMPANY_INFO: { ...DEFAULT_KNOWLEDGE_BASE.COMPANY_INFO, yearsInBusiness: null } };
+    const prompt = buildSystemPrompt({ knowledgeBase, lead: fakeLead() });
     expect(prompt).toContain("NÃO CADASTRADO");
     expect(prompt).not.toMatch(/há \d+ anos/i);
   });
@@ -92,5 +93,18 @@ describe("regras comerciais da Fast EPS", () => {
 
   it("não tem tabela de preço para moldura", () => {
     expect(prompt).toContain("Molduras em EPS: SEM tabela de preço cadastrada");
+  });
+});
+
+describe("conhecimento adicional", () => {
+  const prompt = buildSystemPrompt({ knowledgeBase: DEFAULT_KNOWLEDGE_BASE, lead: fakeLead() });
+
+  it("conhece forro, garantia, endereço, desde 2018 e economia", () => {
+    expect(prompt).toContain("Forro em EPS");
+    expect(prompt).toContain("5 ANOS DE GARANTIA");
+    expect(prompt).toContain("Vanderlei Pavão, 275");
+    expect(prompt).toContain("desde 2018");
+    expect(prompt).toContain("15% a 30%");
+    expect(prompt).toContain("tela de fibra de vidro");
   });
 });

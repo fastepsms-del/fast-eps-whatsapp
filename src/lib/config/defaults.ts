@@ -19,7 +19,10 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "A Fast EPS trabalha com soluções em EPS para acabamento e decoração arquitetônica (molduras) " +
       "e para soluções construtivas (painéis monolíticos). Atende tanto quem busca acabamento estético " +
       "para fachadas quanto quem busca soluções construtivas com painéis. Atende todo o estado de Mato " +
-      "Grosso do Sul, com base em Campo Grande.",
+      "Grosso do Sul, com base em Campo Grande. Atuamos desde 2018 com painel monolítico e molduras em EPS, e " +
+      "damos 5 ANOS DE GARANTIA. Também fazemos FORRO em EPS. Sede, fábrica e local de atendimento: Rua " +
+      "Vanderlei Pavão, 275, Jardim Aeroporto, Campo Grande/MS — só informe o endereço se o cliente perguntar " +
+      "onde fica ou de onde somos; nunca por iniciativa própria.",
     brandTraits: [
       "profissionalismo",
       "conhecimento técnico",
@@ -33,9 +36,13 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
     toneOfVoice:
       "Humanizado e próximo, como um vendedor conversando no WhatsApp: simpático, educado e direto, com " +
       "mensagens curtas e naturais — nunca robótico, sem textão e sem gírias pesadas.",
-    yearsInBusiness: null,
+    yearsInBusiness:
+      "Atuamos desde 2018 nesse ramo (painel monolítico, molduras em EPS). Pode dizer que temos bastante " +
+      "tempo de experiência e que começamos em 2018, sem exagerar nem inventar números de obras ou clientes.",
     disclaimerNoInvent:
-      "Nunca informar tempo de mercado, prêmios ou números institucionais que não estejam cadastrados aqui.",
+      "Nunca informar prêmios, certificações, normas, quantidade de obras/clientes ou outros números " +
+      "institucionais que não estejam cadastrados aqui. Tempo de mercado (desde 2018) e garantia de 5 anos " +
+      "estão cadastrados e podem ser usados.",
   },
 
   PRODUCTS: [
@@ -68,6 +75,11 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         "Bom acabamento",
         "Facilidade para criar detalhes arquitetônicos",
         "Redução de peso em comparação com elementos construtivos mais pesados",
+        "Mais baratas que os métodos tradicionais",
+        "Conforto térmico e acústico",
+        "Boa resistência: argamassa e tela de fibra de vidro protegem de chuva, sol, calor, frio e tempestade",
+        "Pode ser feita sem revestimento (só o EPS) ou com revestimento",
+        "5 anos de garantia",
         "Diferentes desenhos e modelos",
         "Visual sofisticado sem necessariamente utilizar peças pesadas",
       ],
@@ -115,6 +127,18 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
             "Sim, as molduras são feitas sob medida, de acordo com o projeto e a viabilidade de fabricação.",
         },
         {
+          question: "Vocês vendem a moldura sem revestimento?",
+          answer:
+            "Sim. Fazemos a moldura com revestimento e também sem revestimento, só o EPS, se o cliente preferir.",
+        },
+        {
+          question: "Como a moldura de EPS é feita e por que é resistente?",
+          answer:
+            "O EPS tem só a função de molde: ele dá o formato da moldura e não é estrutural. A resistência vem " +
+            "do revestimento de argamassa com tela de fibra de vidro, que protege contra chuva, sol, calor, " +
+            "frio e tempestade.",
+        },
+        {
           question: "Como é calculado o valor da moldura?",
           answer:
             "O cálculo é por metro linear, então depende das medidas do muro/local e do modelo. Por isso " +
@@ -151,6 +175,13 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         "Facilidade de transporte e manuseio",
         "Otimização da execução da obra",
         "Solução construtiva moderna",
+        "Economia de 15% a 30% no custo da obra em relação aos métodos tradicionais",
+        "Entrega mais rápida e instalação mais fácil que os outros métodos",
+        "Gera bem menos entulho",
+        "Conforto térmico e acústico",
+        "Criado na Europa justamente para ser resistente a crises e eventos climáticos",
+        "Existem testes públicos de resistência (balístico, fogo, água) que o cliente pode ver no YouTube",
+        "5 anos de garantia",
       ],
       neverSay: [
         "é só isopor",
@@ -159,6 +190,19 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         "nível específico de isolamento acústico sem dados técnicos",
       ],
       faq: [
+        {
+          question: "Vale a pena? É mais barato?",
+          answer:
+            "A economia na obra costuma ficar entre 15% e 30% em relação aos métodos tradicionais, além de " +
+            "ser mais rápido de entregar e instalar e gerar bem menos entulho.",
+        },
+        {
+          question: "Como é o painel monolítico por dentro? É resistente mesmo?",
+          answer:
+            "O EPS funciona como molde e não tem função estrutural. Quem dá a resistência é o conjunto ao redor " +
+            "dele (argamassa, travas e chapisco). O sistema foi criado na Europa para resistir a eventos " +
+            "climáticos e existem testes de fogo, água e balísticos públicos no YouTube para o cliente ver.",
+        },
         {
           question: "Como é calculado o valor do painel monolítico?",
           answer:
@@ -211,6 +255,24 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         },
       ],
     },
+    {
+      key: "FORRO_EPS",
+      displayName: "Forro em EPS",
+      category: "acabamento_decoracao",
+      shortDescription:
+        "Forro em EPS. Fazemos o forro e também vendemos só as placas, se o cliente preferir.",
+      useCases: ["Forro de ambientes internos e externos", "Venda apenas das placas"],
+      benefits: ["Leveza", "Facilidade de instalação", "Conforto térmico e acústico", "5 anos de garantia"],
+      neverSay: ["preço ou prazo de forro sem passar pela equipe", "especificação técnica não cadastrada"],
+      faq: [
+        {
+          question: "Vocês fazem forro?",
+          answer:
+            "Fazemos sim, e também vendemos só as placas se o cliente quiser. Para orçar, precisamos das " +
+            "medidas do forro/local; depois a equipe assume o orçamento.",
+        },
+      ],
+    },
   ],
 
   PRICING: {
@@ -224,6 +286,7 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "painel com menos resistência, indicado para áreas térreas, sem sobrado. Ao informar, deixe claro que é " +
       "o valor do painel por m² e que o orçamento final depende do projeto, da modalidade (só entrega, " +
       "instalação ou treinamento) e do frete. " +
+      "FORRO: nunca passar valor; peça as medidas e encaminhe para a equipe. " +
       "MOLDURAS: nunca passar valor — não há tabela; depende das medidas e do modelo, então peça as medidas " +
       "do muro/local. Nunca invente preço, desconto ou condição de pagamento.",
     priceTables: {
@@ -268,17 +331,20 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   TECHNICAL_INFORMATION: {
     thermalInsulation:
-      "O EPS possui propriedades de isolamento térmico; o desempenho final depende da composição completa " +
-      "da parede/sistema.",
+      "Painel monolítico e molduras em EPS trazem conforto térmico; o EPS é isolante. Sem prometer número " +
+      "específico: o resultado final depende da composição completa da parede/sistema.",
     acousticInsulation:
-      "O desempenho acústico depende da composição completa da parede e dos demais elementos construtivos; " +
-      "não prometer número específico sem dados técnicos.",
+      "Painel monolítico e molduras trazem conforto acústico. Não prometer número específico (dB) sem dados " +
+      "técnicos; depende da composição completa da parede.",
     structuralNotes:
       "O EPS em si NÃO tem função estrutural — ele funciona como molde/forma. Quem dá a função estrutural " +
       "ao sistema é a composição ao redor dele: argamassa, travas/travamentos e chapisco, que juntos " +
       "garantem a estruturação completa. Capacidade estrutural específica depende do dimensionamento, " +
       "aplicação e execução corretos de cada projeto — não prometer números sem informações técnicas do " +
-      "projeto.",
+      "projeto. Nas MOLDURAS, o EPS é só o molde (dá o formato) e a resistência vem da argamassa com tela " +
+      "de fibra de vidro, que protegem de chuva, sol, calor, frio e tempestade. O painel monolítico foi " +
+      "criado na Europa para ser resistente a eventos climáticos; há testes públicos (balístico, fogo, água) " +
+      "no YouTube, que podem ser indicados ao cliente.",
     paintingCompatibility:
       "Pode ser pintado dependendo do sistema de acabamento utilizado, com produtos compatíveis.",
     outdoorUse:

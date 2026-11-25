@@ -22,7 +22,7 @@ export interface CompanyInfo {
   disclaimerNoInvent: string;
 }
 
-export type ProductKey = "MOLDURA_EPS" | "PAINEL_MONOLITICO";
+export type ProductKey = "MOLDURA_EPS" | "PAINEL_MONOLITICO" | "FORRO_EPS";
 
 export interface ProductConfig {
   key: ProductKey;
@@ -38,7 +38,7 @@ export interface ProductConfig {
 export interface PricingConfig {
   policy: string;
   /** Tabela de preços por produto. `null`/vazio = não cadastrado -> IA nunca inventa valor. */
-  priceTables: Record<ProductKey, Array<{ description: string; unit: string; price: number }> | null>;
+  priceTables: Partial<Record<ProductKey, Array<{ description: string; unit: string; price: number }> | null>>;
 }
 
 export interface DeliveryConfig {
