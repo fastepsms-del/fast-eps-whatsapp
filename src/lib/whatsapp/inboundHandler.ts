@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { logEvent } from "@/lib/logger";
 import { mapInboundMessage } from "./inboundMapper";
 import { markMessageAsRead, sendTextMessage } from "./client";
-import { findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
+import { applyHumanHandoff, findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { getNewLeadsOnlySince, isAiPaused } from "@/lib/aiSwitch";
 import { processInboundTurn, buildUnavailableFallback } from "@/lib/ai/aiEngine";
@@ -84,6 +84,14 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
 
   // Por enquanto a IA só atende quem nunca falou com a gente: lead que já existia é ignorado.
   if (onlyNewSince && lead.createdAt < onlyNewSince) {
+    // Contato antigo: a IA só faz follow-up. Se ele respondeu a um follow-up nosso, a equipe assume.
+    const answeredFollowUp = lead.lastFollowUpAt && lead.lastFollowUpAt > (lead.lastInboundAt ?? new Date(0));
+    if (answeredFollowUp && !lead.humanHandoff) {
+      await applyHumanHandoff(lead.id, {
+        category: "OUTRO",
+        reason: "Cliente antigo respondeu ao follow-up automático — atendente deve assumir a conversa.",
+      });
+    }
     await logEvent({ scope: "webhook", level: "info", message: "Lead anterior ao início da IA, IA não respondeu", metadata: { leadId: lead.id } });
     return;
   }

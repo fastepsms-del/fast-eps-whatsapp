@@ -202,7 +202,11 @@ export async function generateFollowUpText(lead: Lead): Promise<string | null> {
           "[INSTRUÇÃO INTERNA, não é uma mensagem do cliente] O cliente parou de responder. Leia a conversa acima e " +
           "escreva UMA mensagem curta de follow-up, natural, no mesmo tom da conversa, retomando exatamente o ponto em que " +
           "paramos (produto, medidas, orçamento, o que faltou). Não repita o que já foi dito e não use frases genéricas. " +
-          "Se o cliente já recusou, disse que não tem interesse, já fechou ou o assunto acabou, responda somente: NENHUM",
+          "Mensagens marcadas como enviadas por atendente humano foram escritas pela equipe, leia como parte da conversa. " +
+          "Responda somente NENHUM se: o cliente já aceitou a proposta/orçamento ou já fechou, já pagou ou recebeu o produto, " +
+          "já recusou ou disse que não tem interesse, o assunto se encerrou naturalmente, a equipe já está combinando algo " +
+          "com ele, ou você não tem contexto suficiente para saber se faz sentido insistir. Na dúvida, NENHUM. " +
+          "Mensagem curta (no máximo 2 frases), com uma pergunta ou convite simples no final.",
       },
     ],
   });

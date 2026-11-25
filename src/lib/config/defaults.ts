@@ -18,7 +18,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
     description:
       "A Fast EPS trabalha com soluções em EPS para acabamento e decoração arquitetônica (molduras) " +
       "e para soluções construtivas (painéis monolíticos). Atende tanto quem busca acabamento estético " +
-      "para fachadas quanto quem busca soluções construtivas com painéis.",
+      "para fachadas quanto quem busca soluções construtivas com painéis. Atende todo o estado de Mato " +
+      "Grosso do Sul, com base em Campo Grande.",
     brandTraits: [
       "profissionalismo",
       "conhecimento técnico",
@@ -30,7 +31,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "atendimento personalizado",
     ],
     toneOfVoice:
-      "Formal porém humanizado: cordial, claro, seguro e consultivo — nunca robótico, nunca gírias.",
+      "Humanizado e próximo, como um vendedor conversando no WhatsApp: simpático, educado e direto, com " +
+      "mensagens curtas e naturais — nunca robótico, sem textão e sem gírias pesadas.",
     yearsInBusiness: null,
     disclaimerNoInvent:
       "Nunca informar tempo de mercado, prêmios ou números institucionais que não estejam cadastrados aqui.",
@@ -43,7 +45,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       category: "acabamento_decoracao",
       shortDescription:
         "Molduras em EPS para acabamento e decoração arquitetônica: fachadas, beirais, contornos de " +
-        "portas e janelas, sancas, frisos e detalhes arquitetônicos, incluindo projetos personalizados.",
+        "portas e janelas, sancas, frisos e detalhes arquitetônicos. São feitas SOB MEDIDA, e o cálculo é " +
+        "por METRO LINEAR.",
       useCases: [
         "Fachadas",
         "Beirais",
@@ -109,8 +112,13 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         {
           question: "Vocês fazem sob medida?",
           answer:
-            "Podemos avaliar medidas e modelos personalizados conforme o projeto. Quando não houver " +
-            "confirmação para o caso específico, o ideal é encaminhar para o atendimento humano.",
+            "Sim, as molduras são feitas sob medida, de acordo com o projeto e a viabilidade de fabricação.",
+        },
+        {
+          question: "Como é calculado o valor da moldura?",
+          answer:
+            "O cálculo é por metro linear, então depende das medidas do muro/local e do modelo. Por isso " +
+            "precisamos das medidas para passar o orçamento.",
         },
         {
           question: "Vocês instalam?",
@@ -126,7 +134,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       category: "solucao_construtiva",
       shortDescription:
         "Sistema construtivo que utiliza EPS dentro de uma composição estrutural/revestida, usado na " +
-        "execução de paredes e elementos da construção — não é apenas isopor solto.",
+        "execução de paredes e elementos da construção — não é apenas isopor solto. É vendido por METRO " +
+        "QUADRADO de parede, já com as travas.",
       useCases: [
         "Execução de paredes",
         "Elementos construtivos",
@@ -150,6 +159,12 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         "nível específico de isolamento acústico sem dados técnicos",
       ],
       faq: [
+        {
+          question: "Como é calculado o valor do painel monolítico?",
+          answer:
+            "O cálculo é por metro quadrado de parede, e a análise parte do projeto. Dá pra fornecer só o " +
+            "painel, com instalação pela nossa equipe ou com treinamento da equipe da obra.",
+        },
         {
           question: "O que é painel monolítico?",
           answer:
@@ -200,41 +215,53 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   PRICING: {
     policy:
-      "Nunca inventar preço. A Fast EPS trabalha com projeto: só dá pra gerar uma estimativa de verdade " +
-      "com projeto (ou medidas) e a informação do que precisa ser feito — sem isso não tem como criar " +
-      "expectativa de valor pro cliente, e vale enfatizar isso na conversa. Painel monolítico é cobrado " +
-      "por METRO QUADRADO DE PAREDE, não de terreno/área construída — ex: um galpão logístico de 200m² é " +
-      "bem diferente de uma kitnet de 200m², porque a kitnet tem parede, divisória, banheiro, cozinha, e " +
-      "tudo isso conta como metragem de parede, enquanto o galpão pode ter pouca parede proporcionalmente. " +
-      "O valor final também varia conforme a modalidade de atendimento escolhida (ver seção INSTALAÇÃO): " +
-      "só entrega dos materiais, entrega com instalação pela equipe da Fast EPS, ou entrega com " +
-      "treinamento da equipe técnica local. Molduras: valor depende de modelo/medidas/quantidade/ " +
-      "acabamento. Sem tabela cadastrada para o produto, conduzir a coleta de dados pro orçamento e, " +
-      "quando pronto, encaminhar para atendimento humano.",
+      "EVITE falar de valores por iniciativa própria: primeiro entenda o projeto/medidas. Só informe preço " +
+      "se o cliente perguntar diretamente. Se perguntar como é calculado: painel monolítico é por METRO " +
+      "QUADRADO de parede (não de terreno/área construída — um galpão de 200m² tem bem menos parede que uma " +
+      "kitnet de 200m²) e molduras em EPS são SOB MEDIDA e calculadas por METRO LINEAR. " +
+      "PAINEL MONOLÍTICO (valores só do painel, já com as travas, SEM instalação, treinamento nem frete): " +
+      "R$ 139,00/m² é o painel reforçado, feito para aguentar mais de um andar (sobrados); R$ 129,00/m² é o " +
+      "painel com menos resistência, indicado para áreas térreas, sem sobrado. Ao informar, deixe claro que é " +
+      "o valor do painel por m² e que o orçamento final depende do projeto, da modalidade (só entrega, " +
+      "instalação ou treinamento) e do frete. " +
+      "MOLDURAS: nunca passar valor — não há tabela; depende das medidas e do modelo, então peça as medidas " +
+      "do muro/local. Nunca invente preço, desconto ou condição de pagamento.",
     priceTables: {
       MOLDURA_EPS: null,
-      PAINEL_MONOLITICO: null,
+      PAINEL_MONOLITICO: [
+        {
+          description: "Painel monolítico reforçado, com travas (suporta mais de um andar / sobrado). Só o painel.",
+          unit: "m²",
+          price: 139,
+        },
+        {
+          description: "Painel monolítico padrão, com travas (menor resistência, indicado para áreas térreas). Só o painel.",
+          unit: "m²",
+          price: 129,
+        },
+      ],
     },
   },
 
   DELIVERY: {
     policy:
-      "Atendemos obras em todo o Mato Grosso do Sul, com base/foco em Campo Grande. Nunca inventar prazo " +
-      "de entrega ou valor de frete. Se não houver tabela de frete configurada, informar que a equipe vai " +
-      "verificar depois de confirmada a localização da obra.",
+      "Entregamos em todo o estado de Mato Grosso do Sul; o frete é à parte e combinado conforme a " +
+      "localização da obra (nunca inventar valor nem prazo de frete). Quando o cliente não tem as medidas, em " +
+      "CAMPO GRANDE a equipe vai até o local tirar as medidas, SEM custo adicional, só para fazer o orçamento " +
+      "— esse atendimento gratuito é só em Campo Grande, não no resto do estado.",
     citiesServed: ["Campo Grande"],
     freightTable: null,
   },
 
   INSTALLATION: {
     policy:
-      "A Fast EPS oferece três modalidades de atendimento, válidas tanto para molduras em EPS quanto para " +
-      "painel monolítico, cada uma com seu próprio valor: (1) só entrega dos materiais; (2) entrega + " +
-      "equipe técnica da Fast EPS vai até a obra fazer a instalação; (3) entrega + equipe técnica da Fast " +
-      "EPS vai até a obra treinar a equipe técnica local para fazer a instalação. A escolha é sempre do " +
-      "cliente — ter a Fast EPS instalando NUNCA é obrigatório, é uma opção a mais. Apresentar essas três " +
-      "opções como diferencial da empresa no momento certo da conversa (quando fizer sentido no contexto, " +
-      "nunca como lista solta ou discurso de abertura).",
+      "A Fast EPS faz instalação em todo o Mato Grosso do Sul e trabalha com três modalidades, para painel " +
+      "monolítico e para molduras, cada uma com seu valor: (1) SÓ ENTREGA do material (só painel ou só " +
+      "moldura, sem instalação); (2) entrega + equipe técnica da Fast EPS faz a instalação; (3) entrega + " +
+      "equipe técnica da Fast EPS vai até o canteiro de obras TREINAR as equipes locais e entregar o produto " +
+      "(no painel monolítico, a equipe viaja até o local no estado para o treinamento). A escolha é sempre " +
+      "do cliente, instalar com a Fast EPS nunca é obrigatório. Pergunte, no momento certo, se ele precisa de " +
+      "instalação ou só do material.",
     offersInstallation: true,
     regionsAvailable: ["Mato Grosso do Sul (todo o estado)"],
   },
@@ -314,9 +341,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   GREETING_SETTINGS: {
     firstMessage:
-      "Olá! Seja bem-vindo à Fast EPS 👋 Trabalhamos com soluções em EPS, incluindo molduras para " +
-      "acabamento/decoração e painéis monolíticos para soluções construtivas. Como posso te ajudar? Você " +
-      "está buscando molduras em EPS ou painel monolítico?",
+      "Oi, tudo bem? Aqui é da Fast EPS 👋 Trabalhamos com molduras em EPS e painel monolítico. Você " +
+      "está buscando qual dos dois?",
     menuMessage:
       "Olá! Seja bem-vindo à Fast EPS 👋 Trabalhamos com soluções em EPS para construção e acabamento. " +
       "Você gostaria de saber mais sobre:\n1️⃣ Molduras em EPS\n2️⃣ Painel monolítico\n3️⃣ Solicitar orçamento\n" +

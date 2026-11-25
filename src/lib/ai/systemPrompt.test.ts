@@ -73,3 +73,24 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("SEM tabela de preço cadastrada");
   });
 });
+
+describe("regras comerciais da Fast EPS", () => {
+  const prompt = buildSystemPrompt({ knowledgeBase: DEFAULT_KNOWLEDGE_BASE, lead: fakeLead() });
+
+  it("inclui os dois preços do painel e o cálculo por metro quadrado / linear", () => {
+    expect(prompt).toContain('"price":139');
+    expect(prompt).toContain('"price":129');
+    expect(prompt).toContain("METRO LINEAR");
+    expect(prompt).toContain("METRO");
+  });
+
+  it("explica medição gratuita só em Campo Grande e as três modalidades", () => {
+    expect(prompt).toContain("SEM custo adicional");
+    expect(prompt).toContain("SÓ ENTREGA");
+    expect(prompt).toContain("TREINAR");
+  });
+
+  it("não tem tabela de preço para moldura", () => {
+    expect(prompt).toContain("Molduras em EPS: SEM tabela de preço cadastrada");
+  });
+});

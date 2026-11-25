@@ -2,13 +2,14 @@ import { prisma } from "@/lib/db/prisma";
 import { getKnowledgeBase } from "@/lib/config/knowledgeService";
 import { isWithinBusinessHours } from "@/lib/businessHours";
 import { generateFollowUpText } from "@/lib/ai/aiEngine";
-import { getNewLeadsOnlySince, isAiPaused } from "@/lib/aiSwitch";
+import { isAiPaused } from "@/lib/aiSwitch";
 import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { logEvent } from "@/lib/logger";
 import type { Lead, LeadStatus } from "@prisma/client";
 
 const FREE_TEXT_WINDOW_HOURS = 24;
+const MAX_CONVERSATION_AGE_DAYS = 90;
 
 const FOLLOW_UP_CUTOVER_AT = new Date("2026-09-16T00:00:00Z");
 
@@ -39,30 +40,36 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
   const delayThreshold = new Date(now.getTime() - settings.delayHoursAfterNoResponse * 60 * 60 * 1000);
   const minIntervalThreshold = new Date(now.getTime() - settings.minHoursBetweenAttempts * 60 * 60 * 1000);
 
+  // Modo Evolution: cobre também as conversas antigas (importadas do celular). Aí o status do lead não é
+  // confiável, então a IA lê a conversa e decide se vale o follow-up (ver generateFollowUpText). Limita a
+  // conversas dos últimos 90 dias e a poucos envios por rodada para não parecer disparo em massa.
+  const evolutionMode = !usesTemplates();
+  const maxAgeThreshold = new Date(now.getTime() - MAX_CONVERSATION_AGE_DAYS * 24 * 60 * 60 * 1000);
+
   const candidates = await prisma.lead.findMany({
     where: {
-      status: { in: settings.applicableStatuses as LeadStatus[] },
+      ...(evolutionMode
+        ? { status: { notIn: ["CONVERTIDO", "PERDIDO"] as LeadStatus[] } }
+        : { status: { in: settings.applicableStatuses as LeadStatus[] }, createdAt: { gte: FOLLOW_UP_CUTOVER_AT } }),
       humanHandoff: false,
       followUpPaused: false,
       followUpCount: { lt: settings.maxAttempts },
-      lastOutboundAt: { not: null, lte: delayThreshold },
-      createdAt: { gte: FOLLOW_UP_CUTOVER_AT },
+      lastOutboundAt: evolutionMode ? { not: null, lte: delayThreshold, gte: maxAgeThreshold } : { not: null, lte: delayThreshold },
     },
+    orderBy: { lastOutboundAt: "desc" },
   });
 
-  // Follow-up só para leads que a IA atende (os criados depois do início dela), nunca para histórico importado.
-  const onlyNewSince = await getNewLeadsOnlySince();
-
   const eligible = candidates.filter((lead) => {
-    if (onlyNewSince && lead.createdAt < onlyNewSince) return false;
     if (!lead.lastOutboundAt || !lead.lastInboundAt) return false;
     if (lead.lastInboundAt >= lead.lastOutboundAt) return false;
     if (lead.lastFollowUpAt && lead.lastFollowUpAt > minIntervalThreshold) return false;
     return true;
   });
 
+  const maxPerSweep = evolutionMode ? Number(process.env.FOLLOWUP_MAX_PER_SWEEP) || 10 : Infinity;
   let sent = 0;
   for (const lead of eligible) {
+    if (sent >= maxPerSweep) break;
     const ok = await sendFollowUpToLead(lead, settings, now);
     if (ok) sent += 1;
   }
