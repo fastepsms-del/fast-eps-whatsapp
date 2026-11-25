@@ -206,7 +206,7 @@ export async function generateFollowUpText(lead: Lead): Promise<string | null> {
           "Responda somente NENHUM se: o cliente já aceitou a proposta/orçamento ou já fechou, já pagou ou recebeu o produto, " +
           "já recusou ou disse que não tem interesse, o assunto se encerrou naturalmente, a equipe já está combinando algo " +
           "com ele, ou você não tem contexto suficiente para saber se faz sentido insistir. Na dúvida, NENHUM. " +
-          "Mensagem curta (no máximo 2 frases), com uma pergunta ou convite simples no final.",
+          "Mensagem curta (no máximo 2 frases), com um convite simples e natural para retomar, sem interrogatório.",
       },
     ],
   });
