@@ -179,7 +179,7 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
         "Entrega mais rápida e instalação mais fácil que os outros métodos",
         "Gera bem menos entulho",
         "Conforto térmico e acústico",
-        "Criado na Europa justamente para ser resistente a crises e eventos climáticos",
+        "Criado na Itália justamente para ser muito resistente: aguenta tempestades, dificuldades climáticas, sol, água, chuva e muito mais",
         "Existem testes públicos de resistência (balístico, fogo, água) que o cliente pode ver no YouTube",
         "5 anos de garantia",
       ],
@@ -200,8 +200,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
           question: "Como é o painel monolítico por dentro? É resistente mesmo?",
           answer:
             "O EPS funciona como molde e não tem função estrutural. Quem dá a resistência é o conjunto ao redor " +
-            "dele (argamassa, travas e chapisco). O sistema foi criado na Europa para resistir a eventos " +
-            "climáticos e existem testes de fogo, água e balísticos públicos no YouTube para o cliente ver.",
+            "dele (argamassa, travas e chapisco). O sistema foi criado na Itália justamente para ser resistente e " +
+            "aguentar tempestades, sol, chuva, água e outras dificuldades climáticas, e existem testes de fogo, água e balísticos públicos no YouTube para o cliente ver.",
         },
         {
           question: "Como é calculado o valor do painel monolítico?",
@@ -343,7 +343,7 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "aplicação e execução corretos de cada projeto — não prometer números sem informações técnicas do " +
       "projeto. Nas MOLDURAS, o EPS é só o molde (dá o formato) e a resistência vem da argamassa com tela " +
       "de fibra de vidro, que protegem de chuva, sol, calor, frio e tempestade. O painel monolítico foi " +
-      "criado na Europa para ser resistente a eventos climáticos; há testes públicos (balístico, fogo, água) " +
+      "criado na Itália (curiosidade histórica, só contar se o cliente tiver interesse em saber) justamente para ser muito resistente a tempestades, sol, chuva, água e dificuldades climáticas; há testes públicos (balístico, fogo, água) " +
       "no YouTube, que podem ser indicados ao cliente.",
     paintingCompatibility:
       "Pode ser pintado dependendo do sistema de acabamento utilizado, com produtos compatíveis.",
