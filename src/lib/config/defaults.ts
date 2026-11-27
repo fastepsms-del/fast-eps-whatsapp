@@ -202,7 +202,8 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
           question: "Qual o prazo?",
           answer:
             "A produção e entrega levam de 10 a 15 dias, e na prática fica mais perto de 10. A instalação, " +
-            "mesmo em obra grande, costuma levar de 1 a 4 ou 5 dias.",
+            "em obra grande, costuma levar de 1 a 4 ou 5 dias, dependendo do tamanho e da quantidade das " +
+            "peças; a equipe confirma depois de ver o projeto.",
         },
         {
           question: "Vale a pena? É mais barato?",
@@ -344,8 +345,10 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "equipe técnica da Fast EPS vai até o canteiro de obras TREINAR as equipes locais e entregar o produto " +
       "(no painel monolítico, a equipe viaja até o local no estado para o treinamento). A escolha é sempre " +
       "do cliente, instalar com a Fast EPS nunca é obrigatório. Pergunte, no momento certo, se ele precisa de " +
-      "instalação ou só do material. A instalação é rápida: de 1 a 4 ou 5 dias no máximo, mesmo em obras " +
-      "grandes (não prometer prazo exato sem a equipe avaliar o projeto). O painel monolítico exige mão de obra " +
+      "instalação ou só do material. A instalação é rápida: em obras grandes costuma levar de 1 a 4 ou 5 dias " +
+      "no máximo. O tempo depende principalmente do TAMANHO e da QUANTIDADE das peças e do tamanho do " +
+      "orçamento (peças maiores costumam ser mais rápidas de produzir e instalar), então nunca prometa um " +
+      "prazo exato: diga que a equipe confirma depois de ver o projeto. O painel monolítico exige mão de obra " +
       "especializada, mas não é difícil de instalar; se o cliente ou a equipe dele não souber, a Fast EPS " +
       "treina (treinamento técnico). O que fica por fora do nosso fornecimento: fundação, hidráulica, elétrica " +
       "e, principalmente, a parte de acabamento.",
@@ -381,7 +384,7 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
     supportPhone: null,
     supportEmail: null,
     website: null,
-    instagram: null,
+    instagram: "@fast_eps (https://www.instagram.com/fast_eps/)",
   },
 
   BUSINESS_HOURS: {

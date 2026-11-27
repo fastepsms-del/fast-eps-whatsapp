@@ -118,10 +118,11 @@ describe("pagamento, prazo e perfil", () => {
     expect(prompt).toContain("de 10 a 15 dias");
     expect(prompt).toContain("mais perto de 10");
     expect(prompt).toContain("1 a 4 ou 5 dias");
+    expect(prompt).toContain("instagram.com/fast_eps");
     expect(prompt).toContain("Não existe pedido mínimo");
   });
 
   it("trata o 'vou pensar' pedindo os outros orçamentos", () => {
-    expect(prompt).toContain("outros orçamentos");
+    expect(prompt).toMatch(/outros\s+orçamentos/);
   });
 });
