@@ -4,7 +4,7 @@ import { LEAD_STATUS_VALUES, PRODUCT_INTEREST_VALUES } from "@/lib/ai/tools";
 import { AssigneeBadge, PipelineStageBadge, StatusBadge, TemperatureBadge } from "@/components/StatusBadge";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { usesTemplates } from "@/lib/whatsapp/client";
-import { isAiPaused } from "@/lib/aiSwitch";
+import { isAiPaused, isOldLeadsFollowUpEnabled } from "@/lib/aiSwitch";
 import { getCurrentSession } from "@/lib/session";
 import type { Lead, LeadStatus, ProductInterest } from "@prisma/client";
 
@@ -29,6 +29,7 @@ interface SearchParams {
 export default async function AdminLeadsListPage({ searchParams }: { searchParams: SearchParams }) {
   const isAdmin = (await getCurrentSession())?.role === "ADMIN";
   const aiPaused = await isAiPaused();
+  const oldFollowUp = await isOldLeadsFollowUpEnabled();
   const respondFilter = (["now", "recent", "paused"] as const).includes(searchParams.respond as RespondFilter)
     ? (searchParams.respond as RespondFilter)
     : undefined;
@@ -147,6 +148,23 @@ export default async function AdminLeadsListPage({ searchParams }: { searchParam
             className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-white ${aiPaused ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
           >
             {aiPaused ? "Ligar a IA" : "Pausar a IA"}
+          </button>
+        </form>
+      )}
+      {isAdmin && !usesTemplates() && (
+        <form
+          action="/api/admin/ai-switch"
+          method="POST"
+          className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+        >
+          <span>
+            {oldFollowUp
+              ? "Follow-up de contatos antigos: LIGADO (a IA retoma conversas dos últimos 90 dias)."
+              : "Follow-up de contatos antigos: desligado (só quem chegou depois do início da IA)."}
+          </span>
+          <input type="hidden" name="oldFollowUp" value={oldFollowUp ? "0" : "1"} />
+          <button type="submit" className="shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
+            {oldFollowUp ? "Desligar" : "Ligar"}
           </button>
         </form>
       )}

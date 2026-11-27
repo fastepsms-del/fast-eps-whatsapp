@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { logEvent } from "@/lib/logger";
 import { mapInboundMessage } from "./inboundMapper";
-import { markMessageAsRead, sendTextMessage } from "./client";
+import { markMessageAsRead, sendTextMessage, whatsappProvider } from "./client";
+import { earliestPriorConversation } from "./priorHistory";
 import { applyHumanHandoff, findOrCreateLeadByPhone, touchLeadInbound, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { getNewLeadsOnlySince, isAiPaused } from "@/lib/aiSwitch";
@@ -51,7 +52,16 @@ export async function handleInboundMessage(message: Parameters<typeof mapInbound
 
   // Precisa ser lido antes de criar o lead: na primeira vez grava "agora" como marco.
   const onlyNewSince = await getNewLeadsOnlySince();
-  const lead = await findOrCreateLeadByPhone(message.from, profileName);
+  // Número que ainda não está no painel mas já conversou com a equipe pelo celular: conta como contato antigo
+  // (a IA não responde). Só dá para saber consultando o histórico guardado no Evolution.
+  let priorConversationAt: Date | null = null;
+  if (whatsappProvider() === "evolution" && !(await prisma.lead.findUnique({ where: { phone: message.from }, select: { id: true } }))) {
+    priorConversationAt = await earliestPriorConversation(message.from, message);
+  }
+  let lead = await findOrCreateLeadByPhone(message.from, profileName);
+  if (priorConversationAt && lead.createdAt > priorConversationAt) {
+    lead = await prisma.lead.update({ where: { id: lead.id }, data: { createdAt: priorConversationAt } });
+  }
   await touchLeadInbound(lead.id);
 
   const mapped = await mapInboundMessage(message);

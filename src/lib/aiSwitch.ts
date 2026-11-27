@@ -43,3 +43,23 @@ export async function getNewLeadsOnlySince(): Promise<Date | null> {
     return null;
   }
 }
+
+const OLD_FOLLOWUP_KEY = "FOLLOWUP_OLD_LEADS";
+
+/** Quando ligado, o follow-up também alcança contatos antigos (anteriores ao início da IA). Desligado por padrão. */
+export async function isOldLeadsFollowUpEnabled(): Promise<boolean> {
+  try {
+    const row = await prisma.knowledgeConfig.findUnique({ where: { key: OLD_FOLLOWUP_KEY } });
+    return (row?.value as { enabled?: boolean } | null)?.enabled === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function setOldLeadsFollowUp(enabled: boolean, updatedBy?: string): Promise<void> {
+  await prisma.knowledgeConfig.upsert({
+    where: { key: OLD_FOLLOWUP_KEY },
+    create: { key: OLD_FOLLOWUP_KEY, value: { enabled }, updatedBy },
+    update: { value: { enabled }, updatedBy },
+  });
+}

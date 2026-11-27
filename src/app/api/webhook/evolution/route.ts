@@ -5,6 +5,7 @@ import { logEvent } from "@/lib/logger";
 import { findOrCreateLeadByPhone, applyHumanHandoff, touchLeadOutbound } from "@/lib/leads/leadService";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { handleInboundMessage, handleStatusUpdate } from "@/lib/whatsapp/inboundHandler";
+import { isAutomatedMessage } from "@/lib/whatsapp/automatedMessages";
 import {
   describeForRecord,
   mapEvolutionStatus,
@@ -111,6 +112,20 @@ async function handleUpsert(data: EvolutionMessageData): Promise<void> {
 
   const lead = await findOrCreateLeadByPhone(phone);
   const { type, content } = describeForRecord(inbound);
+
+  // Saudação/ausência automática do WhatsApp Business também chega como "enviada por mim". Não é gente:
+  // identifica pelo texto ou por ter saído quase junto com a 1ª mensagem do cliente, e não aciona atendimento humano.
+  const sentAtMs = Number(data.messageTimestamp) * 1000;
+  const answeredInstantly =
+    !lead.lastOutboundAt &&
+    lead.lastInboundAt !== null &&
+    Number.isFinite(sentAtMs) &&
+    Math.abs(sentAtMs - lead.lastInboundAt.getTime()) < 10_000;
+  if (isAutomatedMessage(content) || answeredInstantly) {
+    await recordMessage(lead.id, { direction: "OUTBOUND", type, content, whatsappMessageId: key.id, isAutomated: true });
+    return;
+  }
+
   await recordMessage(lead.id, {
     direction: "OUTBOUND",
     type,

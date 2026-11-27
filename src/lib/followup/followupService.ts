@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getKnowledgeBase } from "@/lib/config/knowledgeService";
 import { isWithinBusinessHours } from "@/lib/businessHours";
 import { generateFollowUpText } from "@/lib/ai/aiEngine";
-import { isAiPaused } from "@/lib/aiSwitch";
+import { getNewLeadsOnlySince, isAiPaused, isOldLeadsFollowUpEnabled } from "@/lib/aiSwitch";
 import { sendTemplateMessage, sendTextMessage, usesTemplates } from "@/lib/whatsapp/client";
 import { recordMessage } from "@/lib/conversation/messageService";
 import { logEvent } from "@/lib/logger";
@@ -59,7 +59,12 @@ export async function runFollowUpSweep(now: Date = new Date()): Promise<FollowUp
     orderBy: { lastOutboundAt: "desc" },
   });
 
+  // Por padrão o follow-up só alcança quem chegou depois do início da IA. Contatos antigos entram quando o
+  // administrador liga "Follow-up de contatos antigos" no painel.
+  const onlyNewSince = evolutionMode && !(await isOldLeadsFollowUpEnabled()) ? await getNewLeadsOnlySince() : null;
+
   const eligible = candidates.filter((lead) => {
+    if (onlyNewSince && lead.createdAt < onlyNewSince) return false;
     if (!lead.lastOutboundAt || !lead.lastInboundAt) return false;
     if (lead.lastInboundAt >= lead.lastOutboundAt) return false;
     if (lead.lastFollowUpAt && lead.lastFollowUpAt > minIntervalThreshold) return false;
