@@ -22,7 +22,9 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "Grosso do Sul, com base em Campo Grande. Atuamos desde 2018 com painel monolítico e molduras em EPS, e " +
       "damos 5 ANOS DE GARANTIA. Também fazemos FORRO em EPS. Sede, fábrica e local de atendimento: Rua " +
       "Vanderlei Pavão, 275, Jardim Aeroporto, Campo Grande/MS — só informe o endereço se o cliente perguntar " +
-      "onde fica ou de onde somos; nunca por iniciativa própria.",
+      "onde fica ou de onde somos; nunca por iniciativa própria. Não existe pedido mínimo. Quem mais compra: " +
+      "instaladores que nos recomendam, arquitetos e pessoas físicas construindo a própria casa; muitos nunca " +
+      "usaram EPS e chegam desconfiados, perguntando se é resistente, durável e se aguenta chuva e sol.",
     brandTraits: [
       "profissionalismo",
       "conhecimento técnico",
@@ -191,6 +193,18 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       ],
       faq: [
         {
+          question: "Precisa de mão de obra especializada?",
+          answer:
+            "Sim, muito provavelmente. Não é difícil de instalar, mas pede mão de obra especializada. Se a " +
+            "equipe do cliente não souber, a Fast EPS dá treinamento técnico, ou faz a instalação.",
+        },
+        {
+          question: "Qual o prazo?",
+          answer:
+            "A produção e entrega levam de 10 a 15 dias, e na prática fica mais perto de 10. A instalação, " +
+            "mesmo em obra grande, costuma levar de 1 a 4 ou 5 dias.",
+        },
+        {
           question: "Vale a pena? É mais barato?",
           answer:
             "A economia na obra costuma ficar entre 15% e 30% em relação aos métodos tradicionais, além de " +
@@ -286,6 +300,10 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "painel com menos resistência, indicado para áreas térreas, sem sobrado. Ao informar, deixe claro que é " +
       "o valor do painel por m² e que o orçamento final depende do projeto, da modalidade (só entrega, " +
       "instalação ou treinamento) e do frete. " +
+      "FORMAS DE PAGAMENTO (informe se perguntarem): 50% de entrada, obrigatória para começar a produção, e " +
+      "os outros 50% na entrega. A entrada pode ser parcelada em até 2x sem juros; acima disso, até 10x com " +
+      "os juros da máquina. Mesmo parcelando, a entrada mínima é de 50%. Nunca prometer desconto, nem outra " +
+      "condição. Não existe pedido mínimo. " +
       "FORRO: nunca passar valor; peça as medidas e encaminhe para a equipe. " +
       "MOLDURAS: nunca passar valor — não há tabela; depende das medidas e do modelo, então peça as medidas " +
       "do muro/local. Nunca invente preço, desconto ou condição de pagamento.",
@@ -308,8 +326,10 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
 
   DELIVERY: {
     policy:
+      "PRAZO de produção e entrega: de 10 a 15 dias, e na prática mais perto de 10 do que de 15 — ao informar, " +
+      "diga isso para passar confiança (sem prometer data exata antes de a equipe confirmar o projeto). " +
       "Entregamos em todo o estado de Mato Grosso do Sul; o frete é à parte e combinado conforme a " +
-      "localização da obra (nunca inventar valor nem prazo de frete). Quando o cliente não tem as medidas, em " +
+      "localização da obra (nunca inventar valor de frete). Quando o cliente não tem as medidas, em " +
       "CAMPO GRANDE a equipe vai até o local tirar as medidas, SEM custo adicional, só para fazer o orçamento " +
       "— esse atendimento gratuito é só em Campo Grande, não no resto do estado.",
     citiesServed: ["Campo Grande"],
@@ -324,7 +344,11 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "equipe técnica da Fast EPS vai até o canteiro de obras TREINAR as equipes locais e entregar o produto " +
       "(no painel monolítico, a equipe viaja até o local no estado para o treinamento). A escolha é sempre " +
       "do cliente, instalar com a Fast EPS nunca é obrigatório. Pergunte, no momento certo, se ele precisa de " +
-      "instalação ou só do material.",
+      "instalação ou só do material. A instalação é rápida: de 1 a 4 ou 5 dias no máximo, mesmo em obras " +
+      "grandes (não prometer prazo exato sem a equipe avaliar o projeto). O painel monolítico exige mão de obra " +
+      "especializada, mas não é difícil de instalar; se o cliente ou a equipe dele não souber, a Fast EPS " +
+      "treina (treinamento técnico). O que fica por fora do nosso fornecimento: fundação, hidráulica, elétrica " +
+      "e, principalmente, a parte de acabamento.",
     offersInstallation: true,
     regionsAvailable: ["Mato Grosso do Sul (todo o estado)"],
   },
@@ -402,6 +426,7 @@ export const DEFAULT_KNOWLEDGE_BASE: KnowledgeBase = {
       "Dúvida sobre instalação não confirmada",
       "Orçamento personalizado",
       "Intenção clara de compra que depende de intervenção humana",
+      "Já temos as medidas/projeto, a resposta sobre instalação e o nome do cliente (qualificação completa)",
     ],
   },
 

@@ -108,3 +108,20 @@ describe("conhecimento adicional", () => {
     expect(prompt).toContain("tela de fibra de vidro");
   });
 });
+
+describe("pagamento, prazo e perfil", () => {
+  const prompt = buildSystemPrompt({ knowledgeBase: DEFAULT_KNOWLEDGE_BASE, lead: fakeLead() });
+
+  it("conhece pagamento, prazo e instalação", () => {
+    expect(prompt).toContain("50% de entrada");
+    expect(prompt).toContain("até 10x");
+    expect(prompt).toContain("de 10 a 15 dias");
+    expect(prompt).toContain("mais perto de 10");
+    expect(prompt).toContain("1 a 4 ou 5 dias");
+    expect(prompt).toContain("Não existe pedido mínimo");
+  });
+
+  it("trata o 'vou pensar' pedindo os outros orçamentos", () => {
+    expect(prompt).toContain("outros orçamentos");
+  });
+});
